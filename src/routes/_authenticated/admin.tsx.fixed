@@ -421,7 +421,7 @@ function AdminPage() {
           </div>
         )}
 
-{activeTab === "gifts" && (
+        {activeTab === "gifts" && (
           <div className="mt-4 space-y-3">
             <input
               className={field}
@@ -430,10 +430,12 @@ function AdminPage() {
               onChange={(e) => setGiftSearch(e.target.value)}
             />
 
+            {giftsLoading && <p className="mt-6 text-sm text-muted-foreground">Loading…</p>}
+
             <div className="mt-4 space-y-3 max-h-[60vh] overflow-y-auto">
-              {(() => {
-                const q = giftSearch.trim().toLowerCase();
-                const filteredGifts = (gifts ?? []).filter((g) => {
+              {(gifts ?? [])
+                .filter((g) => {
+                  const q = giftSearch.trim().toLowerCase();
                   return (
                     !q ||
                     g.gifter_name.toLowerCase().includes(q) ||
@@ -441,17 +443,8 @@ function AdminPage() {
                     (g.gifter_email && g.gifter_email.toLowerCase().includes(q)) ||
                     g.gift_message.toLowerCase().includes(q)
                   );
-                });
-
-                if (filteredGifts.length === 0) {
-                  return (
-                    <p className="text-sm text-muted-foreground">
-                      {giftsLoading ? "Loading…" : "No gifts recorded yet."}
-                    </p>
-                  );
-                }
-
-                return filteredGifts.map((g) => {
+                })
+                .map((g) => {
                   const giftImage = getGiftImage(g.id);
                   return (
                     <article key={g.id} className="rounded-2xl bg-card p-4 shadow-card">
@@ -480,9 +473,12 @@ function AdminPage() {
                         </div>
                       </div>
                     </article>
-                  );
-                });
-              })()}
+                  )
+                )}
+              )}
+              {!giftsLoading && (gifts ?? []).length === 0 && (
+                <p className="text-sm text-muted-foreground">No gifts recorded yet.</p>
+              )}
             </div>
           </div>
         )}
@@ -580,3 +576,4 @@ function Stat({
     </div>
   );
 }
+

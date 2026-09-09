@@ -1,6 +1,8 @@
 import { neon } from "@neondatabase/serverless";
 
-const sql = neon(process.env.DATABASE_URL!);
+const sql = neon(import.meta.env.VITE_DATABASE_URL!, {
+  disableWarningInBrowsers: true,
+});
 
 export async function initializeDatabase() {
   await sql`

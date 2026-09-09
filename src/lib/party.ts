@@ -1,18 +1,59 @@
 export const party = {
-  celebrant: "Auntie",
-  title: "Auntie's Birthday Celebration",
-  date: "Tuesday, 20th October 2026",
-  time: "5:00 PM",
-  venue: "Venue to be confirmed",
-  // Used for the Google Map. Replace with the real street address.
-  venueAddress: "Accra, Ghana",
+  celebrant: "DEBORAH WOOLLEY",
+  title: "DEBORAH WOOLLEY's 70th Birthday Celebration",
+  dateISO: "2026-10-24T17:00:00",
   message:
-    "Come share an evening of good food, music and laughter as we celebrate another beautiful year of life.",
+    "CELEBRATING 70 YEARS OF FAITH, GRACE AND LOVE",
+  events: [
+    {
+      id: "friday",
+      day: "Friday",
+      date: "October 23, 2026",
+      name: "Praise Night",
+      time: "6:00 PM - 8:00 PM",
+      venue: "ICC CHARISMATIC CHURCH",
+      address: "1737 SW 3rd St., Grand Prairie, TX 75051",
+      dressCode: "All White",
+      note: "Praise 0630 to 0840",
+      icon: "🙏",
+      color: "from-blue-500 to-cyan-500",
+      mapQuery: "1737 SW 3rd St., Grand Prairie, TX 75051",
+    },
+    {
+      id: "saturday",
+      day: "Saturday",
+      date: "October 24, 2026",
+      name: "70TH BIRTHDAY CELEBRATION",
+      time: "5:00 PM - 10:00 PM",
+      venue: "BOB DUNCAN CENTER",
+      address: "2800 S Center St., Arlington, TX 76014",
+      dressCode: "Formal",
+      note: "Write no african time",
+      icon: "🎂",
+      color: "from-purple-500 to-pink-500",
+      mapQuery: "2800 S Center St., Arlington, TX 76014",
+    },
+    {
+      id: "sunday",
+      day: "Sunday",
+      date: "October 25, 2026",
+      name: "THANKSGIVING SERVICE",
+      time: "9:00 AM - 12:30 PM",
+      venue: "ICC CHARISMATIC CHURCH",
+      address: "1717 SW 3rd St., Grand Prairie, TX 75051",
+      dressCode: "Fascinator and Hats",
+      note: "No white, wear fascinator and hat",
+      icon: "🕊️",
+      color: "from-amber-500 to-orange-500",
+      mapQuery: "1717 SW 3rd St., Grand Prairie, TX 75051",
+    },
+  ],
 };
 
-export function mapEmbedUrl() {
+export function mapEmbedUrl(query?: string) {
   const key = import.meta.env.VITE_LOVABLE_CONNECTOR_GOOGLE_MAPS_BROWSER_KEY;
+  const address = query || party.events[1].mapQuery;
   return `https://www.google.com/maps/embed/v1/place?key=${key}&q=${encodeURIComponent(
-    party.venueAddress,
+    address,
   )}&zoom=15`;
 }

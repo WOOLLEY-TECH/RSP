@@ -5,11 +5,14 @@ import { initializeDatabase } from "./lib/neon";
 import { initializeAuth } from "./lib/auth";
 import "./styles.css";
 
-await initializeDatabase();
-await initializeAuth();
+async function init() {
+  await initializeDatabase();
+  await initializeAuth();
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+init();
