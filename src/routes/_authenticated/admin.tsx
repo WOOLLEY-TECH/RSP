@@ -1,0 +1,471 @@
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { getActivityLog, logActivity, type ActivityAction } from "@/lib/activity";
+
+export const Route = createFileRoute("/_authenticated/admin")({
+  head: () => ({
+    meta: [
+      { title: "Guest List Dashboard — Birthday RSVP" },
+      { name: "description", content: "Track RSVPs, attendance and the total expected guests." },
+      { property: "og:title", content: "Guest List Dashboard — Birthday RSVP" },
+      { property: "og:description", content: "Private organizer dashboard." },
+    ],
+  }),
+  component: AdminPage,
+});
+
+type Rsvp = {
+  id: string;
+  full_name: string;
+  phone_number: string;
+  attending: boolean;
+  additional_guests: number;
+  guest_names: string[];
+  created_at: string;
+};
+
+type ActivityLog = {
+  id: string;
+  user_id: string | null;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  details: Record<string, unknown>;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+};
+
+const field =
+  "w-full rounded-2xl border border-input bg-card px-4 py-3 text-base outline-none focus:border-primary";
+
+function AdminPage() {
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | "yes" | "no">("all");
+  const [editing, setEditing] = useState<Rsvp | null>(null);
+  const [activeTab, setActiveTab] = useState<"guests" | "activity">("guests");
+  const [activitySearch, setActivitySearch] = useState("");
+  const [activityFilter, setActivityFilter] = useState<string>("all");
+  const [accessLogged, setAccessLogged] = useState(false);
+
+  useEffect(() => {
+    if (!accessLogged) {
+      logActivity({ action: "admin_access", entityType: "admin" });
+      setAccessLogged(true);
+    }
+  }, [accessLogged]);
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["rsvps"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("rsvps")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data as Rsvp[];
+    },
+  });
+
+  const { data: activities, isLoading: activitiesLoading } = useQuery({
+    queryKey: ["activity_log"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("activity_log")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (error) throw error;
+      return data as ActivityLog[];
+    },
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("rsvps").delete().eq("id", id);
+      if (error) throw error;
+      await logActivity({ action: "rsvp_deleted", entityType: "rsvp", entityId: id });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["rsvps"] });
+      qc.invalidateQueries({ queryKey: ["activity_log"] });
+    },
+  });
+
+  const save = useMutation({
+    mutationFn: async (r: Rsvp) => {
+      const { error } = await supabase
+        .from("rsvps")
+        .update({
+          full_name: r.full_name,
+          phone_number: r.phone_number,
+          attending: r.attending,
+          additional_guests: r.guest_names.length,
+          guest_names: r.guest_names,
+        })
+        .eq("id", r.id);
+      if (error) throw error;
+      await logActivity({
+        action: "rsvp_updated",
+        entityType: "rsvp",
+        entityId: r.id,
+        details: { fullName: r.full_name, attending: r.attending, guests: r.guest_names.length },
+      });
+    },
+    onSuccess: () => {
+      setEditing(null);
+      qc.invalidateQueries({ queryKey: ["rsvps"] });
+      qc.invalidateQueries({ queryKey: ["activity_log"] });
+    },
+  });
+
+  const rows = (data ?? []).filter((r) => {
+    const q = search.trim().toLowerCase();
+    const matches = !q || r.full_name.toLowerCase().includes(q) || r.phone_number.toLowerCase().includes(q);
+    const f = filter === "all" || (filter === "yes" ? r.attending : !r.attending);
+    return matches && f;
+  });
+
+  const all = data ?? [];
+  const attending = all.filter((r) => r.attending);
+  const totalPeople = attending.reduce((sum, r) => sum + 1 + r.guest_names.length, 0);
+
+  const filteredActivities = (activities ?? []).filter((a) => {
+    const q = activitySearch.trim().toLowerCase();
+    const matches = !q || a.action.toLowerCase().includes(q) || a.entity_type.toLowerCase().includes(q) || (a.entity_id && a.entity_id.toLowerCase().includes(q)) || JSON.stringify(a.details).toLowerCase().includes(q);
+    const f = activityFilter === "all" || a.action === activityFilter;
+    return matches && f;
+  });
+
+  const actionTypes = [...new Set(activities?.map((a) => a.action) ?? [])].sort();
+
+  const updateEditingField = useCallback(<K extends keyof Rsvp>(field: K, value: Rsvp[K]) => {
+    setEditing((prev) => (prev ? { ...prev, [field]: value } : null));
+  }, []);
+
+  const updateGuestName = useCallback((index: number, value: string) => {
+    setEditing((prev) => {
+      if (!prev) return null;
+      const newGuests = [...prev.guest_names];
+      newGuests[index] = value;
+      return { ...prev, guest_names: newGuests };
+    });
+  }, []);
+
+  const removeGuestName = useCallback((index: number) => {
+    setEditing((prev) => {
+      if (!prev) return null;
+      return { ...prev, guest_names: prev.guest_names.filter((_, idx) => idx !== index) };
+    });
+  }, []);
+
+  const addGuestName = useCallback(() => {
+    setEditing((prev) => (prev ? { ...prev, guest_names: [...prev.guest_names, ""] } : null));
+  }, []);
+
+  return (
+    <main className="min-h-screen bg-background px-4 py-8">
+      <div className="mx-auto max-w-5xl">
+        <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
+          <h1 className="truncate font-display text-2xl font-bold">Guest list</h1>
+          <button
+            onClick={async () => {
+              await logActivity({ action: "user_logout", entityType: "auth" });
+              await supabase.auth.signOut();
+              qc.clear();
+              navigate({ to: "/auth" });
+            }}
+            className="shrink-0 rounded-2xl border border-input px-4 py-2 text-sm"
+          >
+            Sign out
+          </button>
+        </header>
+
+        <div className="mt-6 border-b border-border">
+          <nav className="flex gap-1" role="tablist">
+            <button
+              role="tab"
+              aria-selected={activeTab === "guests"}
+              onClick={() => setActiveTab("guests")}
+              className={`rounded-t-2xl px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === "guests"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              Guest List ({all.length})
+            </button>
+            <button
+              role="tab"
+              aria-selected={activeTab === "activity"}
+              onClick={() => setActiveTab("activity")}
+              className={`rounded-t-2xl px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === "activity"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              Activity Log ({activities?.length ?? 0})
+            </button>
+          </nav>
+        </div>
+
+        {activeTab === "guests" && (
+          <>
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <Stat label="RSVPs" value={all.length} />
+              <Stat label="Attending" value={attending.length} />
+              <Stat label="Not attending" value={all.length - attending.length} />
+              <Stat label="People coming" value={totalPeople} highlight />
+            </div>
+
+            <div className="mt-6 space-y-3">
+              <input
+                className={field}
+                placeholder="Search by name or phone"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              <div className="flex gap-2">
+                {(["all", "yes", "no"] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className={`rounded-full px-4 py-2 text-sm ${
+                      filter === f
+                        ? "bg-primary text-primary-foreground"
+                        : "border border-input bg-card text-muted-foreground"
+                    }`}
+                  >
+                    {f === "all" ? "All" : f === "yes" ? "Attending" : "Not attending"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {isLoading && <p className="mt-6 text-sm text-muted-foreground">Loading…</p>}
+            {error && (
+              <p className="mt-6 text-sm text-destructive">
+                You don't have permission to view the guest list.
+              </p>
+            )}
+
+            <div className="mt-4 space-y-3">
+              {rows.map((r) => (
+                <article key={r.id} className="rounded-3xl bg-card p-5 shadow-card">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                    <div className="min-w-0">
+                      <h2 className="truncate font-semibold">{r.full_name}</h2>
+                      <p className="text-sm text-muted-foreground">{r.phone_number}</p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
+                        r.attending
+                          ? "bg-primary-soft text-accent-foreground"
+                          : "bg-secondary text-muted-foreground"
+                      }`}
+                    >
+                      {r.attending ? "Attending" : "Not attending"}
+                    </span>
+                  </div>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    Extra guests: {r.guest_names.length} · Total: {r.attending ? 1 + r.guest_names.length : 0}
+                  </p>
+                  {r.guest_names.length > 0 && (
+                    <p className="mt-1 text-sm">With: {r.guest_names.join(", ")}</p>
+                  )}
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      onClick={() => setEditing(r)}
+                      className="rounded-2xl border border-input px-4 py-2 text-sm"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm(`Delete ${r.full_name}'s RSVP?`)) remove.mutate(r.id);
+                      }}
+                      className="rounded-2xl border border-input px-4 py-2 text-sm text-destructive"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              ))}
+              {!isLoading && rows.length === 0 && (
+                <p className="text-sm text-muted-foreground">No RSVPs to show yet.</p>
+              )}
+            </div>
+          </>
+        )}
+
+        {activeTab === "activity" && (
+          <div className="mt-4 space-y-3">
+            <input
+              className={field}
+              placeholder="Search activity (action, entity, details...)"
+              value={activitySearch}
+              onChange={(e) => setActivitySearch(e.target.value)}
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setActivityFilter("all")}
+                className={`rounded-full px-4 py-2 text-sm ${
+                  activityFilter === "all"
+                    ? "bg-primary text-primary-foreground"
+                    : "border border-input bg-card text-muted-foreground"
+                }`}
+              >
+                All
+              </button>
+              {actionTypes.map((action) => (
+                <button
+                  key={action}
+                  onClick={() => setActivityFilter(action)}
+                  className={`rounded-full px-4 py-2 text-sm ${
+                    activityFilter === action
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-input bg-card text-muted-foreground"
+                  }`}
+                >
+                  {action.replace(/_/g, " ")}
+                </button>
+              ))}
+            </div>
+
+            {activitiesLoading && <p className="mt-6 text-sm text-muted-foreground">Loading…</p>}
+
+            <div className="mt-4 space-y-3 max-h-[60vh] overflow-y-auto">
+              {filteredActivities.map((a) => (
+                <article key={a.id} className="rounded-2xl bg-card p-4 shadow-card">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-accent-foreground">
+                          {a.action.replace(/_/g, " ")}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{a.entity_type}</span>
+                        {a.entity_id && (
+                          <span className="text-xs text-muted-foreground font-mono">{a.entity_id.slice(0, 8)}…</span>
+                        )}
+                      </div>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {new Date(a.created_at).toLocaleString()}
+                      </p>
+                      {Object.keys(a.details).length > 0 && (
+                        <details className="mt-2">
+                          <summary className="text-xs text-muted-foreground cursor-pointer">Details</summary>
+                          <pre className="mt-1 text-[10px] text-muted-foreground bg-background p-2 rounded overflow-x-auto">{JSON.stringify(a.details, null, 2)}</pre>
+                        </details>
+                      )}
+                    </div>
+                    {a.user_id && (
+                      <span className="shrink-0 text-xs text-muted-foreground font-mono">{a.user_id.slice(0, 8)}…</span>
+                    )}
+                  </div>
+                </article>
+              ))}
+              {!activitiesLoading && filteredActivities.length === 0 && (
+                <p className="text-sm text-muted-foreground">No activity to show.</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {editing && (
+          <div className="fixed inset-0 z-50 flex items-end bg-ink/50 p-4 sm:items-center">
+            <div className="mx-auto w-full max-w-md rounded-3xl bg-card p-6 shadow-card">
+              <h2 className="font-display text-xl font-bold">Edit RSVP</h2>
+              <div className="mt-4 space-y-3">
+                <input
+                  className={field}
+                  value={editing.full_name}
+                  onChange={(e) => updateEditingField("full_name", e.target.value)}
+                />
+                <input
+                  className={field}
+                  value={editing.phone_number}
+                  onChange={(e) => updateEditingField("phone_number", e.target.value)}
+                />
+                <label className="flex items-center gap-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={editing.attending}
+                    onChange={(e) => updateEditingField("attending", e.target.checked)}
+                  />
+                  Attending
+                </label>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Additional guests</p>
+                  {editing.guest_names.map((g, i) => (
+                    <div key={i} className="flex gap-2">
+                      <input
+                        className={field}
+                        value={g}
+                        onChange={(e) => updateGuestName(i, e.target.value)}
+                      />
+                      <button
+                        onClick={() => removeGuestName(i)}
+                        className="shrink-0 rounded-2xl border border-input px-3 text-sm"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    onClick={addGuestName}
+                    className="rounded-2xl bg-primary-soft px-4 py-2 text-sm text-accent-foreground"
+                  >
+                    + Add guest
+                  </button>
+                </div>
+              </div>
+              <div className="mt-6 flex gap-2">
+                <button
+                  onClick={() =>
+                    save.mutate({
+                      ...editing,
+                      guest_names: editing.guest_names.map((g) => g.trim()).filter(Boolean),
+                    })
+                  }
+                  className="flex-1 rounded-2xl bg-primary px-4 py-3 font-semibold text-primary-foreground"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setEditing(null)}
+                  className="rounded-2xl border border-input px-4 py-3"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: number;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-2xl p-4 ${highlight ? "bg-hero-gradient text-primary-foreground" : "bg-card shadow-card"}`}
+    >
+      <p className="text-2xl font-bold">{value}</p>
+      <p className="text-xs uppercase tracking-wide opacity-70">{label}</p>
+    </div>
+  );
+}
