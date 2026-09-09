@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { sql } from "./neon";
 
 export type ActivityAction =
   | "rsvp_submitted"
@@ -6,7 +6,8 @@ export type ActivityAction =
   | "rsvp_deleted"
   | "user_login"
   | "user_logout"
-  | "admin_access";
+  | "admin_access"
+  | "gift_submitted";
 
 export async function logActivity({
   action,
@@ -22,24 +23,20 @@ export async function logActivity({
   userId?: string;
 }) {
   try {
-    await supabase.from("activity_log").insert({
-      action,
-      entity_type: entityType,
-      entity_id: entityId ?? null,
-      details,
-      user_id: userId ?? null,
-    });
+    await sql`
+      INSERT INTO activity_log (action, entity_type, entity_id, details, user_id)
+      VALUES (${action}, ${entityType}, ${entityId ?? null}, ${JSON.stringify(details)}, ${userId ?? null})
+    `;
   } catch {
     console.warn("Failed to log activity:", action);
   }
 }
 
 export async function getActivityLog(limit = 100) {
-  const { data, error } = await supabase
-    .from("activity_log")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-  if (error) throw error;
-  return data;
+  const rows = await sql`
+    SELECT * FROM activity_log
+    ORDER BY created_at DESC
+    LIMIT ${limit}
+  `;
+  return rows;
 }

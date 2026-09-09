@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { sql } from "@/lib/neon";
 import { getActivityLog, logActivity, type ActivityAction } from "@/lib/activity";
+import { clearSession } from "@/lib/session";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
@@ -62,32 +63,22 @@ function AdminPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["rsvps"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("rsvps")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as Rsvp[];
+      const rows = await sql`SELECT * FROM rsvps ORDER BY created_at DESC`;
+      return rows as Rsvp[];
     },
   });
 
   const { data: activities, isLoading: activitiesLoading } = useQuery({
     queryKey: ["activity_log"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("activity_log")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(200);
-      if (error) throw error;
-      return data as ActivityLog[];
+      const rows = await sql`SELECT * FROM activity_log ORDER BY created_at DESC LIMIT 200`;
+      return rows as ActivityLog[];
     },
   });
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("rsvps").delete().eq("id", id);
-      if (error) throw error;
+      await sql`DELETE FROM rsvps WHERE id = ${id}`;
       await logActivity({ action: "rsvp_deleted", entityType: "rsvp", entityId: id });
     },
     onSuccess: () => {
@@ -98,17 +89,16 @@ function AdminPage() {
 
   const save = useMutation({
     mutationFn: async (r: Rsvp) => {
-      const { error } = await supabase
-        .from("rsvps")
-        .update({
-          full_name: r.full_name,
-          phone_number: r.phone_number,
-          attending: r.attending,
-          additional_guests: r.guest_names.length,
-          guest_names: r.guest_names,
-        })
-        .eq("id", r.id);
-      if (error) throw error;
+      await sql`
+        UPDATE rsvps
+        SET full_name = ${r.full_name},
+            phone_number = ${r.phone_number},
+            attending = ${r.attending},
+            additional_guests = ${r.guest_names.length},
+            guest_names = ${r.guest_names},
+            updated_at = NOW()
+        WHERE id = ${r.id}
+      `;
       await logActivity({
         action: "rsvp_updated",
         entityType: "rsvp",
@@ -173,9 +163,9 @@ function AdminPage() {
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
           <h1 className="truncate font-display text-2xl font-bold">Guest list</h1>
           <button
-            onClick={async () => {
-              await logActivity({ action: "user_logout", entityType: "auth" });
-              await supabase.auth.signOut();
+            onClick={() => {
+              logActivity({ action: "user_logout", entityType: "auth" });
+              clearSession();
               qc.clear();
               navigate({ to: "/auth" });
             }}

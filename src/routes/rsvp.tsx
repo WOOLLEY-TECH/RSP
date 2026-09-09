@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useCallback, useMemo } from "react";
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
+import { sql } from "@/lib/neon";
 import { party, mapEmbedUrl } from "@/lib/party";
 import { logActivity } from "@/lib/activity";
 import giftImg from "@/assets/gift.png";
@@ -65,29 +65,25 @@ function RsvpPage() {
   const submit = useCallback(async () => {
     setSaving(true);
     setError(null);
-    const { data, error: dbError } = await supabase
-      .from("rsvps")
-      .insert({
-        full_name: fullName.trim(),
-        phone_number: phone.trim(),
-        attending: attending === true,
-        additional_guests: cleanGuests.length,
-        guest_names: cleanGuests,
-      })
-      .select()
-      .single();
-    setSaving(false);
-    if (dbError) {
+    try {
+      const rows = await sql`
+        INSERT INTO rsvps (full_name, phone_number, attending, additional_guests, guest_names)
+        VALUES (${fullName.trim()}, ${phone.trim()}, ${attending === true}, ${cleanGuests.length}, ${cleanGuests})
+        RETURNING id
+      `;
+      const data = rows[0];
+      setSaving(false);
+      await logActivity({
+        action: "rsvp_submitted",
+        entityType: "rsvp",
+        entityId: data.id,
+        details: { fullName: fullName.trim(), attending: attending === true, guests: cleanGuests.length },
+      });
+      setStep("done");
+    } catch {
+      setSaving(false);
       setError("Something went wrong. Please try again.");
-      return;
     }
-    await logActivity({
-      action: "rsvp_submitted",
-      entityType: "rsvp",
-      entityId: data.id,
-      details: { fullName: fullName.trim(), attending: attending === true, guests: cleanGuests.length },
-    });
-    setStep("done");
   }, [fullName, phone, attending, cleanGuests]);
 
   const updateGuest = useCallback((index: number, value: string) => {
@@ -107,14 +103,26 @@ function RsvpPage() {
   const [giftGifterPhone, setGiftGifterPhone] = useState("");
   const [giftGifterEmail, setGiftGifterEmail] = useState("");
 
-  const handleGiftSubmit = () => {
+  const handleGiftSubmit = async () => {
     if (giftMessage.trim() && giftGifterName.trim()) {
-      // Gift message and gifter details saved - could send to backend here
-      setGiftMessage("");
-      setGiftGifterName("");
-      setGiftGifterPhone("");
-      setGiftGifterEmail("");
-      setGiftOpen(false);
+      try {
+        await sql`
+          INSERT INTO gifts (gifter_name, gifter_phone, gifter_email, gift_message)
+          VALUES (${giftGifterName.trim()}, ${giftGifterPhone.trim()}, ${giftGifterEmail.trim() || null}, ${giftMessage.trim()})
+        `;
+        await logActivity({
+          action: "gift_submitted",
+          entityType: "gift",
+          details: { gifterName: giftGifterName.trim(), giftMessage: giftMessage.trim() },
+        });
+        setGiftMessage("");
+        setGiftGifterName("");
+        setGiftGifterPhone("");
+        setGiftGifterEmail("");
+        setGiftOpen(false);
+      } catch {
+        console.error("Failed to save gift");
+      }
     }
   };
 

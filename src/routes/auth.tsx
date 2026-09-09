@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { createAdminUser, verifyAdminUser } from "@/lib/auth";
+import { createSession } from "@/lib/session";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -31,21 +32,20 @@ function AuthPage() {
     setBusy(true);
     setError(null);
     setMessage(null);
-    if (mode === "signin") {
-      const { error: err } = await supabase.auth.signInWithPassword({ email, password });
+    try {
+      if (mode === "signin") {
+        const user = await verifyAdminUser(email, password);
+        createSession(user.id, user.email);
+        navigate({ to: "/admin" });
+      } else {
+        await createAdminUser(email, password);
+        setMode("signin");
+        setMessage("Account created! Please sign in.");
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
+    } finally {
       setBusy(false);
-      if (err) return setError(err.message);
-      navigate({ to: "/admin" });
-    } else {
-      const { data, error: err } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: window.location.origin + "/admin" },
-      });
-      setBusy(false);
-      if (err) return setError(err.message);
-      if (data.session) navigate({ to: "/admin" });
-      else setMessage("Check your email to confirm your account, then sign in.");
     }
   }
 
