@@ -523,13 +523,13 @@ function RsvpPage() {
         </div>
       </button>
 
-      {/* Gift Modal - Original Design */}
+      {/* Gift Modal - Responsive Design */}
       {giftOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6">
-          <div className="relative w-full max-w-md rounded-3xl bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4">
+          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-card shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <button
               onClick={closeGift}
-              className="absolute top-4 right-4 rounded-full p-1 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="absolute top-3 right-3 z-10 rounded-full p-1 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               aria-label="Close"
             >
               <svg
@@ -544,7 +544,7 @@ function RsvpPage() {
             </button>
 
             {giftSaved ? (
-              <div className="py-8 text-center">
+              <div className="py-8 px-6 text-center">
                 <div className="mx-auto grid size-14 place-items-center rounded-full bg-accent/20 text-primary">
                   <Gift />
                 </div>
@@ -559,21 +559,21 @@ function RsvpPage() {
                 </Button>
               </div>
             ) : (
-              <form onSubmit={saveGift} className="space-y-4">
-                <div className="text-center mb-6">
-                  <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10">
-                    <img src={giftImg} alt="Gift" className="w-12 h-12" />
+              <form onSubmit={saveGift} className="p-4 sm:p-6 space-y-5">
+                <div className="text-center mb-4">
+                  <div className="mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+                    <img src={giftImg} alt="Gift" className="w-10 h-10" />
                   </div>
-                  <h3 className="font-display text-xl font-bold">Birthday Gift</h3>
+                  <h3 className="font-display text-lg sm:text-xl font-bold">Birthday Gift</h3>
                   <p className="mt-1 text-sm text-muted-foreground">
                     Let us know what you're bringing
                   </p>
                 </div>
 
-                {/* Gift Selection Grid */}
+                {/* Gift Selection Grid - Responsive */}
                 <div className="space-y-3">
                   <Label className="block text-sm font-medium">Choose a gift (optional)</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
                     {giftItems.map((gift) => (
                       <button
                         key={gift.id}
@@ -583,13 +583,13 @@ function RsvpPage() {
                             giftModalSelectedGift === gift.id ? null : gift.id,
                           )
                         }
-                        className={`relative rounded-xl border-2 p-2 transition-all ${
+                        className={`relative rounded-xl border-2 p-1.5 sm:p-2 transition-all ${
                           giftModalSelectedGift === gift.id
                             ? "border-primary bg-primary/5"
                             : "border-border hover:border-primary/50"
                         }`}
                       >
-                        <div className="aspect-square rounded-lg overflow-hidden bg-muted/50 mb-1">
+                        <div className="aspect-square rounded-lg overflow-hidden bg-muted/50 mb-1.5">
                           <img
                             src={gift.image}
                             alt={gift.name}
@@ -597,10 +597,12 @@ function RsvpPage() {
                             loading="lazy"
                           />
                         </div>
-                        <p className="text-xs font-medium text-center text-foreground">
+                        <p className="text-[10px] sm:text-xs font-medium text-center text-foreground line-clamp-1">
                           {gift.name}
                         </p>
-                        <p className="text-xs text-center text-muted-foreground">${gift.price}</p>
+                        <p className="text-[10px] sm:text-xs text-center text-muted-foreground">
+                          ${gift.price}
+                        </p>
                         {giftModalSelectedGift === gift.id && (
                           <div className="absolute inset-0 rounded-xl border-2 border-primary" />
                         )}
@@ -614,7 +616,7 @@ function RsvpPage() {
                   )}
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-4 sm:grid sm:grid-cols-2 sm:gap-4">
                   <div>
                     <Label htmlFor="gift-name" className="mb-2 block text-sm font-medium">
                       Your Name
@@ -699,11 +701,11 @@ function RsvpPage() {
 
       {/* Gift Purchase Modal */}
       {giftPurchaseOpen && selectedGift && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 sm:p-6">
-          <div className="relative w-full max-w-md rounded-3xl bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4">
+          <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl bg-card shadow-2xl animate-in fade-in zoom-in-95 duration-200">
             <button
               onClick={closeGiftPurchase}
-              className="absolute top-4 right-4 rounded-full p-1 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="absolute top-3 right-3 z-10 rounded-full p-1 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               aria-label="Close"
             >
               <svg
@@ -718,7 +720,7 @@ function RsvpPage() {
             </button>
 
             {giftPurchased ? (
-              <div className="py-8 text-center">
+              <div className="py-8 px-6 text-center">
                 <div className="mx-auto grid size-14 place-items-center rounded-full bg-accent/20 text-primary">
                   <Gift />
                 </div>
@@ -738,12 +740,12 @@ function RsvpPage() {
                 const gift = giftItems.find((g) => g.id === selectedGift);
                 if (!gift) return null;
                 return (
-                  <div className="space-y-4">
-                    <div className="text-center mb-4">
-                      <div className="mx-auto mb-3 flex h-24 w-24 items-center justify-center rounded-2xl bg-primary/10">
-                        <img src={gift.image} alt={gift.name} className="w-16 h-16" />
+                  <div className="p-4 sm:p-6 space-y-5">
+                    <div className="text-center mb-2">
+                      <div className="mx-auto mb-3 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10">
+                        <img src={gift.image} alt={gift.name} className="w-12 h-12" />
                       </div>
-                      <h3 className="font-display text-xl font-bold text-foreground">
+                      <h3 className="font-display text-lg sm:text-xl font-bold text-foreground">
                         {gift.name}
                       </h3>
                       <p className="mt-1 text-sm text-muted-foreground">
@@ -765,11 +767,11 @@ function RsvpPage() {
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 sm:flex-col sm:gap-3">
                       <Button
                         type="button"
                         variant="outline"
-                        className="flex-1 h-12"
+                        className="w-full h-12 sm:h-12"
                         onClick={closeGiftPurchase}
                       >
                         Cancel
@@ -778,7 +780,7 @@ function RsvpPage() {
                         type="button"
                         disabled={giftPurchasing}
                         onClick={purchaseGift}
-                        className="flex-1 h-12 bg-primary hover:bg-primary/90"
+                        className="w-full h-12 sm:h-12 bg-primary hover:bg-primary/90"
                       >
                         {giftPurchasing ? "Processing…" : `Purchase for $${gift.price}`}
                       </Button>
