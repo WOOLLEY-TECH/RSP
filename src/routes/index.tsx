@@ -329,7 +329,7 @@ function EventCard({ event }: { event: (typeof party.events)[0] & { featured?: b
         }`}
       />
       {isFeatured && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 animate-pulse-subtle">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 animate-pulse-subtle">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/90 text-primary-foreground px-3 py-1 text-xs font-semibold uppercase tracking-wide shadow-lg">
             <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-foreground/50" />
@@ -358,10 +358,10 @@ function EventCard({ event }: { event: (typeof party.events)[0] & { featured?: b
             </div>
             <h3 className="font-display text-xl font-bold text-foreground mb-1">{event.name}</h3>
             <p className="text-primary font-semibold mb-3">{event.time}</p>
-            <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mb-4">
-              <span className="flex items-center gap-1">
+            <div className="flex flex-col sm:flex-row flex-wrap items-start gap-2 sm:gap-3 text-sm text-muted-foreground mb-4">
+              <span className="flex items-center gap-1 flex-wrap">
                 <svg
-                  className="w-4 h-4"
+                  className="w-4 h-4 shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -378,11 +378,11 @@ function EventCard({ event }: { event: (typeof party.events)[0] & { featured?: b
                     d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
-                <span className="truncate max-w-[200px]">{event.venue}</span>
+                <span className="break-words">{event.venue}</span>
               </span>
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 flex-wrap">
                 <svg
-                  className="w-4 h-4"
+                  className="w-4 h-4 shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -394,7 +394,7 @@ function EventCard({ event }: { event: (typeof party.events)[0] & { featured?: b
                     d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                   />
                 </svg>
-                <span className="truncate max-w-[200px]">{event.address}</span>
+                <span className="break-words">{event.address}</span>
               </span>
             </div>
             <div className="flex items-center gap-3 pt-3 border-t border-border/50">
@@ -412,7 +412,7 @@ function EventCard({ event }: { event: (typeof party.events)[0] & { featured?: b
                     d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"
                   />
                 </svg>
-                {event.dressCode}
+                Dress code: {event.dressCode}
               </span>
             </div>
           </div>

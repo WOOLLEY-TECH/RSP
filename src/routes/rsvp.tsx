@@ -28,6 +28,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { sql } from "@/lib/neon";
 import { party, mapEmbedUrl } from "@/lib/party";
 import { logActivity } from "@/lib/activity";
+import { normalizePhoneForWhatsApp, generateWhatsAppMessage, openWhatsApp } from "@/lib/whatsapp";
 import giftImg from "@/assets/gift.png";
 import giftTeddyBear from "@/assets/gift/teddy-bear.png";
 import giftRose from "@/assets/gift/rose-.png";
@@ -527,6 +528,9 @@ function RsvpPage() {
                   fullName={fullName}
                   attending={attending === true}
                   totalGuests={totalGuests}
+                  attendingDays={cleanAttendingDays}
+                  phone={phone}
+                  guestCount={cleanGuests.length}
                   onGiftPurchase={openGiftPurchase}
                 />
               )}
@@ -1120,10 +1124,31 @@ interface DoneProps {
   fullName: string;
   attending: boolean;
   totalGuests: number;
+  attendingDays: string[];
+  phone: string;
+  guestCount: number;
   onGiftPurchase?: (giftId: string) => void;
 }
 
-function Done({ fullName, attending, totalGuests, onGiftPurchase }: DoneProps) {
+function Done({
+  fullName,
+  attending,
+  totalGuests,
+  attendingDays,
+  phone,
+  guestCount,
+  onGiftPurchase,
+}: DoneProps) {
+  const handleWhatsAppClick = () => {
+    const normalizedPhone = normalizePhoneForWhatsApp(phone);
+    const message = generateWhatsAppMessage({
+      fullName,
+      attending,
+      attendingDays,
+      guestCount,
+    });
+    openWhatsApp(normalizedPhone, message);
+  };
   const renderGiftSection = () => (
     <div className="mt-8 w-full max-w-3xl">
       <div className="flex items-center justify-between mb-4">
@@ -1183,6 +1208,17 @@ function Done({ fullName, attending, totalGuests, onGiftPurchase }: DoneProps) {
           We're sorry you can't join us, but we're grateful you let the family know.
         </p>
         {renderGiftSection()}
+        <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <button
+            onClick={handleWhatsAppClick}
+            className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-green-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-transform hover:scale-105 hover:bg-green-700"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.372-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.372-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.085 3.87 1.123 4.074.039.201.074.271.198.355.263.18 1.28.774 3.098 1.943 1.517.977 2.855 2.06 3.322 2.332.514.297 1.07.454 1.605.454.53 0 1.07-.152 1.492-.41.243-.155.669-.52.744-.57.075-.043.168-.06.25-.06.105 0 .198.028.298.068.099.038.197.098.297.174.105.068.197.16.297.188.216.056.633.02.71-.174.068-.173.187-.327.297-.497.12-.158.045-.316.01-.471-.035-.158-.23-.505-.372-.653-.14-.148-.35-.342-.51-.5-.173-.173-.435-.316-.792-.375-.343-.07-.932-.07-1.255-.07-.326 0-.643.058-.89.173-.173.08-.247.15-.52.298-.623.343-1.517 1.555-2.39 3.098-1.045 1.795-1.653 2.827-1.653 2.827 0 .326.134.623.23.792.098.149.168.327.18.52.01.198-.06.372-.18.52z" />
+            </svg>
+            Send Response on WhatsApp
+          </button>
+        </div>
         <Link
           to="/"
           className="mt-6 inline-block rounded-full border border-border px-6 py-3 text-sm"
@@ -1214,6 +1250,18 @@ function Done({ fullName, attending, totalGuests, onGiftPurchase }: DoneProps) {
       </div>
 
       {renderGiftSection()}
+
+      <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button
+          onClick={handleWhatsAppClick}
+          className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-green-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-transform hover:scale-105 hover:bg-green-700"
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.372-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.372-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.085 3.87 1.123 4.074.039.201.074.271.198.355.263.18 1.28.774 3.098 1.943 1.517.977 2.855 2.06 3.322 2.332.514.297 1.07.454 1.605.454.53 0 1.07-.152 1.492-.41.243-.155.669-.52.744-.57.075-.043.168-.06.25-.06.105 0 .198.028.298.068.099.038.197.098.297.174.105.068.197.16.297.188.216.056.633.02.71-.174.068-.173.187-.327.297-.497.12-.158.045-.316.01-.471-.035-.158-.23-.505-.372-.653-.14-.148-.35-.342-.51-.5-.173-.173-.435-.316-.792-.375-.343-.07-.932-.07-1.255-.07-.326 0-.643.058-.89.173-.173.08-.247.15-.52.298-.623.343-1.517 1.555-2.39 3.098-1.045 1.795-1.653 2.827-1.653 2.827 0 .326.134.623.23.792.098.149.168.327.18.52.01.198-.06.372-.18.52z" />
+          </svg>
+          Confirm on WhatsApp
+        </button>
+      </div>
 
       <Link
         to="/"
