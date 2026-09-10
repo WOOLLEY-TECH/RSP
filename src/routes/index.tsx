@@ -215,7 +215,7 @@ function ImageSlider() {
 function Confetti() {
   const pieces = Array.from({ length: 28 });
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden z-25">
       {pieces.map((_, i) => (
         <span
           key={i}
@@ -431,7 +431,7 @@ function Index() {
             </div>
             <iframe
               title={`Map showing the venue: ${party.events[1].venue}`}
-              src={mapEmbedUrl(party.events[1].mapQuery)}
+              src={`https://www.google.com/maps?q=${encodeURIComponent(party.events[1].mapQuery)}&output=embed`}
               loading="lazy"
               allowFullScreen
               referrerPolicy="no-referrer-when-downgrade"
@@ -454,7 +454,7 @@ function Index() {
               </div>
               <iframe
                 title={`Map showing ${event.venue}`}
-                src={mapEmbedUrl(event.mapQuery)}
+                src={`https://www.google.com/maps?q=${encodeURIComponent(event.mapQuery)}&output=embed`}
                 loading="lazy"
                 allowFullScreen
                 referrerPolicy="no-referrer-when-downgrade"
