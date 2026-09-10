@@ -589,7 +589,7 @@ function RsvpPage() {
                             : "border-border hover:border-primary/50"
                         }`}
                       >
-                        <div className="aspect-square rounded-lg overflow-hidden bg-muted/50 mb-1.5">
+                        <div className="aspect-[4/3] sm:aspect-square rounded-lg overflow-hidden bg-muted/50 mb-1.5">
                           <img
                             src={gift.image}
                             alt={gift.name}
