@@ -311,18 +311,40 @@ function SparkleBurst() {
   );
 }
 
-function EventCard({ event }: { event: (typeof party.events)[0] }) {
+function EventCard({ event }: { event: (typeof party.events)[0] & { featured?: boolean } }) {
   const gradientClass = `bg-gradient-to-br ${event.color}`;
+  const isFeatured = event.featured;
 
   return (
-    <article className="group relative overflow-hidden rounded-3xl bg-card shadow-card border border-border transition-all duration-300 hover:shadow-xl hover:-translate-y-1">
+    <article
+      className={`group relative overflow-hidden rounded-3xl bg-card shadow-card transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${
+        isFeatured
+          ? "border-2 border-primary/50 ring-2 ring-primary/20 scale-[1.02] z-10"
+          : "border border-border"
+      }`}
+    >
       <div
-        className={`absolute inset-0 ${gradientClass} opacity-10 group-hover:opacity-15 transition-opacity`}
+        className={`absolute inset-0 ${gradientClass} opacity-10 group-hover:opacity-15 transition-opacity ${
+          isFeatured ? "opacity-15 group-hover:opacity-20" : ""
+        }`}
       />
+      {isFeatured && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 animate-pulse-subtle">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/90 text-primary-foreground px-3 py-1 text-xs font-semibold uppercase tracking-wide shadow-lg">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-foreground/50" />
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary-foreground" />
+            </span>
+            Main Celebration
+          </span>
+        </div>
+      )}
       <div className="relative p-6 sm:p-8">
         <div className="flex items-start gap-4">
           <div
-            className={`flex-shrink-0 w-16 h-16 rounded-2xl ${gradientClass} flex items-center justify-center text-3xl shadow-lg`}
+            className={`flex-shrink-0 w-16 h-16 rounded-2xl ${gradientClass} flex items-center justify-center text-3xl shadow-lg ${
+              isFeatured ? "ring-4 ring-primary/30" : ""
+            }`}
           >
             {event.icon}
           </div>
@@ -392,9 +414,6 @@ function EventCard({ event }: { event: (typeof party.events)[0] }) {
                 </svg>
                 {event.dressCode}
               </span>
-              {event.note && (
-                <span className="text-xs text-muted-foreground/80 italic">{event.note}</span>
-              )}
             </div>
           </div>
         </div>

@@ -263,9 +263,14 @@ function RsvpPage() {
       setSubmitting(false);
       setStep("done");
       window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch {
+    } catch (error) {
+      console.error("RSVP submission error:", error);
       setSubmitting(false);
-      setSubmitError("Something went wrong. Please try again.");
+      setSubmitError(
+        error instanceof Error && error.message.includes("attending_days")
+          ? "Database not updated yet. Please contact the organizer."
+          : "Something went wrong. Please try again.",
+      );
     }
   }
 
