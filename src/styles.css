@@ -150,10 +150,10 @@
 @keyframes shimmer {
   0%,
   100% {
-    color: oklch(0.82 0.14 90);
+    color: oklch(0.95 0.01 250);
   }
   50% {
-    color: oklch(0.95 0.08 95);
+    color: oklch(1 0 0);
   }
 }
 

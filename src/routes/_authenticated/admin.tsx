@@ -59,16 +59,7 @@ type Gift = {
 const field =
   "w-full rounded-2xl border border-input bg-card px-4 py-3 text-base outline-none focus:border-primary";
 
-const giftImages = [
-  balloon,
-  celebrate,
-  crown,
-  cupcake,
-  flowerBouquet,
-  heart,
-  rose,
-  teddyBear,
-];
+const giftImages = [balloon, celebrate, crown, cupcake, flowerBouquet, heart, rose, teddyBear];
 
 function getGiftImage(id: string) {
   const idx = id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -157,7 +148,8 @@ function AdminPage() {
 
   const rows = (data ?? []).filter((r) => {
     const q = search.trim().toLowerCase();
-    const matches = !q || r.full_name.toLowerCase().includes(q) || r.phone_number.toLowerCase().includes(q);
+    const matches =
+      !q || r.full_name.toLowerCase().includes(q) || r.phone_number.toLowerCase().includes(q);
     const f = filter === "all" || (filter === "yes" ? r.attending : !r.attending);
     return matches && f;
   });
@@ -168,7 +160,12 @@ function AdminPage() {
 
   const filteredActivities = (activities ?? []).filter((a) => {
     const q = activitySearch.trim().toLowerCase();
-    const matches = !q || a.action.toLowerCase().includes(q) || a.entity_type.toLowerCase().includes(q) || (a.entity_id && a.entity_id.toLowerCase().includes(q)) || JSON.stringify(a.details).toLowerCase().includes(q);
+    const matches =
+      !q ||
+      a.action.toLowerCase().includes(q) ||
+      a.entity_type.toLowerCase().includes(q) ||
+      (a.entity_id && a.entity_id.toLowerCase().includes(q)) ||
+      JSON.stringify(a.details).toLowerCase().includes(q);
     const f = activityFilter === "all" || a.action === activityFilter;
     return matches && f;
   });
@@ -318,7 +315,8 @@ function AdminPage() {
                     </span>
                   </div>
                   <p className="mt-3 text-sm text-muted-foreground">
-                    Extra guests: {r.guest_names.length} · Total: {r.attending ? 1 + r.guest_names.length : 0}
+                    Extra guests: {r.guest_names.length} · Total:{" "}
+                    {r.attending ? 1 + r.guest_names.length : 0}
                   </p>
                   {r.guest_names.length > 0 && (
                     <p className="mt-1 text-sm">With: {r.guest_names.join(", ")}</p>
@@ -395,7 +393,9 @@ function AdminPage() {
                         </span>
                         <span className="text-xs text-muted-foreground">{a.entity_type}</span>
                         {a.entity_id && (
-                          <span className="text-xs text-muted-foreground font-mono">{a.entity_id.slice(0, 8)}…</span>
+                          <span className="text-xs text-muted-foreground font-mono">
+                            {a.entity_id.slice(0, 8)}…
+                          </span>
                         )}
                       </div>
                       <p className="mt-1 text-sm text-muted-foreground">
@@ -403,13 +403,19 @@ function AdminPage() {
                       </p>
                       {Object.keys(a.details).length > 0 && (
                         <details className="mt-2">
-                          <summary className="text-xs text-muted-foreground cursor-pointer">Details</summary>
-                          <pre className="mt-1 text-[10px] text-muted-foreground bg-background p-2 rounded overflow-x-auto">{JSON.stringify(a.details, null, 2)}</pre>
+                          <summary className="text-xs text-muted-foreground cursor-pointer">
+                            Details
+                          </summary>
+                          <pre className="mt-1 text-[10px] text-muted-foreground bg-background p-2 rounded overflow-x-auto">
+                            {JSON.stringify(a.details, null, 2)}
+                          </pre>
                         </details>
                       )}
                     </div>
                     {a.user_id && (
-                      <span className="shrink-0 text-xs text-muted-foreground font-mono">{a.user_id.slice(0, 8)}…</span>
+                      <span className="shrink-0 text-xs text-muted-foreground font-mono">
+                        {a.user_id.slice(0, 8)}…
+                      </span>
                     )}
                   </div>
                 </article>
@@ -421,7 +427,7 @@ function AdminPage() {
           </div>
         )}
 
-{activeTab === "gifts" && (
+        {activeTab === "gifts" && (
           <div className="mt-4 space-y-3">
             <input
               className={field}
@@ -457,11 +463,7 @@ function AdminPage() {
                     <article key={g.id} className="rounded-2xl bg-card p-4 shadow-card">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div className="shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-primary-soft flex items-center justify-center">
-                          <img
-                            src={giftImage}
-                            alt="Gift"
-                            className="w-10 h-10 object-contain"
-                          />
+                          <img src={giftImage} alt="Gift" className="w-10 h-10 object-contain" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
@@ -562,15 +564,7 @@ function AdminPage() {
   );
 }
 
-function Stat({
-  label,
-  value,
-  highlight,
-}: {
-  label: string;
-  value: number;
-  highlight?: boolean;
-}) {
+function Stat({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
   return (
     <div
       className={`rounded-2xl p-4 ${highlight ? "bg-hero-gradient text-primary-foreground" : "bg-card shadow-card"}`}

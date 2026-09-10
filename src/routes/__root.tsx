@@ -1,4 +1,10 @@
-import { Outlet, Link, createRootRouteWithContext, HeadContent, Scripts } from "@tanstack/react-router";
+import {
+  Outlet,
+  Link,
+  createRootRouteWithContext,
+  HeadContent,
+  Scripts,
+} from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode } from "react";
 
@@ -34,12 +40,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Birthday RSVP" },
       { name: "description", content: "Confirm your attendance for the birthday celebration." },
       { property: "og:title", content: "Birthday RSVP" },
-      { property: "og:description", content: "Confirm your attendance for the birthday celebration." },
+      {
+        property: "og:description",
+        content: "Confirm your attendance for the birthday celebration.",
+      },
       { property: "og:type", content: "website" },
     ],
-    links: [
-      { rel: "stylesheet", href: appCss },
-    ],
+    links: [{ rel: "stylesheet", href: appCss }],
   }),
   component: RootComponent,
   notFoundComponent: NotFoundComponent,

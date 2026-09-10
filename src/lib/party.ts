@@ -2,8 +2,7 @@ export const party = {
   celebrant: "DEBORAH WOOLLEY",
   title: "DEBORAH WOOLLEY's 70th Birthday Celebration",
   dateISO: "2026-10-24T17:00:00",
-  message:
-    "CELEBRATING 70 YEARS OF FAITH, GRACE AND LOVE",
+  message: "CELEBRATING 70 YEARS OF FAITH, GRACE AND LOVE",
   events: [
     {
       id: "friday",
