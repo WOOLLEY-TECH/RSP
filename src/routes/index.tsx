@@ -55,7 +55,6 @@ const birthdayIcons = [
   { Icon: Gift, color: "oklch(0.75 0.18 85)" },
   { Icon: Heart, color: "oklch(0.6 0.22 20)" },
   { Icon: Sparkles, color: "oklch(0.85 0.15 90)" },
-  { Icon: Star, color: "oklch(0.8 0.12 60)" },
   { Icon: Music, color: "oklch(0.7 0.18 280)" },
   { Icon: Crown, color: "oklch(0.75 0.15 65)" },
   { Icon: Cake, color: "oklch(0.65 0.2 350)" },
