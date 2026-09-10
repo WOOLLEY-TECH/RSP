@@ -37,6 +37,7 @@ import giftCupcake from "@/assets/gift/cupcake.png";
 import giftCrown from "@/assets/gift/crown.png";
 import giftCelebrate from "@/assets/gift/celebrate.png";
 import giftBalloon from "@/assets/gift/balloon.png";
+import mum5 from "@/assets/mum5.jpeg";
 
 export const Route = createFileRoute("/rsvp")({
   head: () => ({
@@ -48,6 +49,14 @@ export const Route = createFileRoute("/rsvp")({
       },
       { property: "og:title", content: `RSVP — ${party.title}` },
       { property: "og:description", content: "Confirm your attendance in under a minute." },
+      { property: "og:image", content: mum5 },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: `RSVP — ${party.title}` },
+      { name: "twitter:description", content: "Confirm your attendance in under a minute." },
+      { name: "twitter:image", content: mum5 },
     ],
   }),
   component: RsvpPage,
@@ -171,8 +180,9 @@ function RsvpPage() {
   const [giftErrors, setGiftErrors] = useState<Errors>({});
   const [giftSaving, setGiftSaving] = useState(false);
   const [giftSaved, setGiftSaved] = useState(false);
+  const [giftModalSelectedGift, setGiftModalSelectedGift] = useState<string | null>(null);
 
-  // Gift purchase state
+  // Gift purchase state (for Done page)
   const [selectedGift, setSelectedGift] = useState<string | null>(null);
   const [giftPurchaseOpen, setGiftPurchaseOpen] = useState(false);
   const [giftPurchasing, setGiftPurchasing] = useState(false);
@@ -292,15 +302,34 @@ function RsvpPage() {
     }
     setGiftSaving(true);
     setGiftErrors({});
+
+    // Include selected gift in the message if one was chosen
+    const selectedGiftItem = giftModalSelectedGift
+      ? giftItems.find((g) => g.id === giftModalSelectedGift)
+      : null;
+    const finalMessage = selectedGiftItem
+      ? `${giftMessage.trim()}\n\n[Gift: ${selectedGiftItem.name} - $${selectedGiftItem.price}]`
+      : giftMessage.trim();
+
     try {
       await sql`
         INSERT INTO gifts (gifter_name, gifter_phone, gifter_email, gift_message)
-        VALUES (${giftGifterName.trim()}, ${giftGifterPhone.trim() || null}, ${giftGifterEmail.trim() || null}, ${giftMessage.trim()})
+        VALUES (${giftGifterName.trim()}, ${giftGifterPhone.trim() || null}, ${giftGifterEmail.trim() || null}, ${finalMessage})
       `;
       await logActivity({
         action: "gift_submitted",
         entityType: "gift",
-        details: { gifterName: giftGifterName.trim(), giftMessage: giftMessage.trim() },
+        details: {
+          gifterName: giftGifterName.trim(),
+          giftMessage: giftMessage.trim(),
+          selectedGift: selectedGiftItem
+            ? {
+                id: selectedGiftItem.id,
+                name: selectedGiftItem.name,
+                price: selectedGiftItem.price,
+              }
+            : null,
+        },
       });
       setGiftSaving(false);
       setGiftSaved(true);
@@ -318,11 +347,13 @@ function RsvpPage() {
     setGiftMessage("");
     setGiftErrors({});
     setGiftSaved(false);
+    setGiftModalSelectedGift(null);
   }
 
   function closeGift() {
     setGiftOpen(false);
     setGiftSaved(false);
+    setGiftModalSelectedGift(null);
   }
 
   function openGiftPurchase(giftId: string) {
@@ -372,16 +403,34 @@ function RsvpPage() {
     <main className="celebration-canvas relative min-h-screen overflow-hidden px-4 py-7 sm:px-7 sm:py-10 lg:px-10">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,var(--color-border)_1px,transparent_1px),linear-gradient(to_bottom,var(--color-border)_1px,transparent_1px)] bg-[size:64px_64px] opacity-20" />
       <div className="page-enter relative mx-auto max-w-6xl">
-        <header className="mb-7 text-center sm:mb-9">
-          <span className="inline-flex rounded-full border border-border bg-background/80 backdrop-blur-xl px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            Celebrating 70 years
-          </span>
-          <h1 className="mt-3 font-display text-4xl font-semibold leading-none text-foreground sm:text-5xl lg:text-6xl">
-            Deborah Woolley
-          </h1>
-          <p className="mt-3 text-sm font-medium text-muted-foreground sm:text-base">
-            October 23–25, 2026
-          </p>
+        <header className="mb-7 text-center sm:mb-9 flex items-center justify-between">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to invitation
+          </Link>
+          <div>
+            <span className="inline-flex rounded-full border border-border bg-background/80 backdrop-blur-xl px-4 py-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Celebrating 70 years
+            </span>
+            <h1 className="mt-3 font-display text-4xl font-semibold leading-none text-foreground sm:text-5xl lg:text-6xl">
+              Deborah Woolley
+            </h1>
+            <p className="mt-3 text-sm font-medium text-muted-foreground sm:text-base">
+              October 23–25, 2026
+            </p>
+          </div>
+          <div className="w-24" />
         </header>
 
         <nav aria-label="RSVP progress" className="mx-auto mb-6 grid max-w-lg grid-cols-3 gap-2">
@@ -459,8 +508,9 @@ function RsvpPage() {
       {/* Floating Gift Button - Original Design */}
       <button
         onClick={openGift}
-        className="fixed bottom-6 right-6 z-50 animate-bounce-subtle transition-all duration-300 hover:scale-110 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-pink-500/50"
+        className="fixed bottom-6 right-6 z-50 animate-bounce-subtle transition-all duration-300 hover:scale-110 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-pink-500/50 pb-safe lg:pb-0"
         aria-label="Send a gift"
+        style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
       >
         <div className="relative">
           <img
@@ -518,6 +568,50 @@ function RsvpPage() {
                   <p className="mt-1 text-sm text-muted-foreground">
                     Let us know what you're bringing
                   </p>
+                </div>
+
+                {/* Gift Selection Grid */}
+                <div className="space-y-3">
+                  <Label className="block text-sm font-medium">Choose a gift (optional)</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {giftItems.map((gift) => (
+                      <button
+                        key={gift.id}
+                        type="button"
+                        onClick={() =>
+                          setGiftModalSelectedGift(
+                            giftModalSelectedGift === gift.id ? null : gift.id,
+                          )
+                        }
+                        className={`relative rounded-xl border-2 p-2 transition-all ${
+                          giftModalSelectedGift === gift.id
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="aspect-square rounded-lg overflow-hidden bg-muted/50 mb-1">
+                          <img
+                            src={gift.image}
+                            alt={gift.name}
+                            className="h-full w-full object-cover object-center"
+                            loading="lazy"
+                          />
+                        </div>
+                        <p className="text-xs font-medium text-center text-foreground">
+                          {gift.name}
+                        </p>
+                        <p className="text-xs text-center text-muted-foreground">${gift.price}</p>
+                        {giftModalSelectedGift === gift.id && (
+                          <div className="absolute inset-0 rounded-xl border-2 border-primary" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  {giftModalSelectedGift && (
+                    <p className="text-xs text-primary text-center">
+                      Selected: {giftItems.find((g) => g.id === giftModalSelectedGift)?.name}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -970,19 +1064,65 @@ interface DoneProps {
 }
 
 function Done({ fullName, attending, totalGuests, onGiftPurchase }: DoneProps) {
+  const renderGiftSection = () => (
+    <div className="mt-8 w-full max-w-3xl">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+            <Gift className="size-5" />
+          </div>
+          <div>
+            <h3 className="font-display text-lg font-semibold text-foreground">Send a Gift</h3>
+            <p className="text-xs text-muted-foreground">Choose a special gift for Deborah</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {giftItems.map((gift) => (
+          <button
+            key={gift.id}
+            onClick={() => onGiftPurchase?.(gift.id)}
+            className="group relative rounded-2xl border border-border bg-background/50 p-3 transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+          >
+            <div className="relative aspect-square rounded-xl overflow-hidden bg-muted/50 mb-3">
+              <img
+                src={gift.image}
+                alt={gift.name}
+                className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <div className="text-left">
+              <p className="font-medium text-sm text-foreground">{gift.name}</p>
+              <p className="text-xs text-muted-foreground">${gift.price}</p>
+            </div>
+            <Sparkles className="absolute top-2 right-2 size-4 text-primary/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </button>
+        ))}
+      </div>
+
+      <p className="mt-4 text-xs text-muted-foreground text-center">
+        Gifts will be presented at the celebration. Your name will be included with the gift.
+      </p>
+    </div>
+  );
+
   if (!attending) {
     return (
-      <div className="flex min-h-[430px] flex-col items-center justify-center text-center">
-        <div className="grid size-16 place-items-center rounded-full bg-primary/20 text-primary">
+      <div className="flex flex-col items-center justify-center text-center w-full min-h-[430px]">
+        <div className="grid size-16 place-items-center rounded-full bg-primary/20 text-primary mb-4">
           <PartyPopper className="size-8" />
         </div>
-        <p className="mt-5 text-xs font-semibold uppercase text-primary">Response received</p>
+        <p className="text-xs font-semibold uppercase text-primary">Response received</p>
         <h2 className="mt-2 font-display text-4xl font-semibold text-foreground">
           Thank you, {fullName.split(" ")[0]}
         </h2>
         <p className="mt-3 max-w-md text-sm leading-6 text-muted-foreground">
           We're sorry you can't join us, but we're grateful you let the family know.
         </p>
+        {renderGiftSection()}
         <Link
           to="/"
           className="mt-6 inline-block rounded-full border border-border px-6 py-3 text-sm"
@@ -1013,49 +1153,7 @@ function Done({ fullName, attending, totalGuests, onGiftPurchase }: DoneProps) {
         </p>
       </div>
 
-      {/* Gift Purchase Section */}
-      <div className="mt-8 w-full max-w-3xl">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
-              <Gift className="size-5" />
-            </div>
-            <div>
-              <h3 className="font-display text-lg font-semibold text-foreground">Send a Gift</h3>
-              <p className="text-xs text-muted-foreground">Choose a special gift for Deborah</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {giftItems.map((gift) => (
-            <button
-              key={gift.id}
-              onClick={() => onGiftPurchase?.(gift.id)}
-              className="group relative rounded-2xl border border-border bg-background/50 p-3 transition-all hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
-            >
-              <div className="relative aspect-square rounded-xl overflow-hidden bg-muted/50 mb-3">
-                <img
-                  src={gift.image}
-                  alt={gift.name}
-                  className="h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
-                  loading="lazy"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              </div>
-              <div className="text-left">
-                <p className="font-medium text-sm text-foreground">{gift.name}</p>
-                <p className="text-xs text-muted-foreground">${gift.price}</p>
-              </div>
-              <Sparkles className="absolute top-2 right-2 size-4 text-primary/50 opacity-0 group-hover:opacity-100 transition-opacity" />
-            </button>
-          ))}
-        </div>
-
-        <p className="mt-4 text-xs text-muted-foreground text-center">
-          Gifts will be presented at the celebration. Your name will be included with the gift.
-        </p>
-      </div>
+      {renderGiftSection()}
 
       <Link
         to="/"
