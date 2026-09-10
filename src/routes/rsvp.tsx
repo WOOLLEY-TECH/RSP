@@ -67,6 +67,7 @@ const rsvpSchema = z
     fullName: z.string().trim().min(2, "Please enter your full name.").max(100),
     phone: z.string().trim().min(7, "Please enter a valid phone number.").max(20),
     attending: z.boolean(),
+    attendingDays: z.array(z.enum(["Friday", "Saturday", "Sunday"])).optional(),
     bringingGuests: z.boolean(),
     guests: z.array(z.string().trim().min(2, "Please enter each guest's name.")).max(19),
   })
@@ -83,6 +84,13 @@ const rsvpSchema = z
         code: "custom",
         path: ["guests"],
         message: "Please add at least one guest.",
+      });
+    }
+    if (value.attending && (!value.attendingDays || value.attendingDays.length === 0)) {
+      context.addIssue({
+        code: "custom",
+        path: ["attendingDays"],
+        message: "Please select at least one day you'll be attending.",
       });
     }
   });
@@ -102,13 +110,13 @@ const events = [
     day: "Friday",
     date: "October 23, 2026",
     title: "Praise Night",
-    time: "6:00 PM - 8:00 PM",
-    venue: "ICC CHARISMATIC CHURCH",
-    address: "1737 SW 3rd St., Grand Prairie, TX 75051",
+    time: "6:30pm - 8:30 pm",
+    venue: "INTERNATIONAL CHARISMATIC CHURCH (ICC)",
+    address: "1737 SW 3rd St, Grand Prairie, TX 75051",
     dress: "All White",
-    note: "Praise 0630 to 0840",
+    note: "All White",
     icon: "🙏",
-    mapQuery: "1737 SW 3rd St., Grand Prairie, TX 75051",
+    mapQuery: "1737 SW 3rd St, Grand Prairie, TX 75051",
   },
   {
     day: "Saturday",
@@ -118,7 +126,7 @@ const events = [
     venue: "BOB DUNCAN CENTER",
     address: "2800 S Center St., Arlington, TX 76014",
     dress: "Formal",
-    note: "Write no african time",
+    note: "Formal",
     icon: "🎂",
     mapQuery: "2800 S Center St., Arlington, TX 76014",
     featured: true,
@@ -128,12 +136,12 @@ const events = [
     date: "October 25, 2026",
     title: "THANKSGIVING SERVICE",
     time: "9:00 AM - 12:30 PM",
-    venue: "ICC CHARISMATIC CHURCH",
-    address: "1717 SW 3rd St., Grand Prairie, TX 75051",
+    venue: "INTERNATIONAL CHARISMATIC CHURCH (ICC)",
+    address: "1717 SW 3rd St, Grand Prairie, TX 75051",
     dress: "Fascinator and Hats",
-    note: "No white, wear fascinator and hat",
+    note: "Fascinator and Hats",
     icon: "🕊️",
-    mapQuery: "1717 SW 3rd St., Grand Prairie, TX 75051",
+    mapQuery: "1717 SW 3rd St, Grand Prairie, TX 75051",
   },
 ] as const;
 
@@ -166,6 +174,7 @@ function RsvpPage() {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [attending, setAttending] = useState<boolean | null>(null);
+  const [attendingDays, setAttendingDays] = useState<string[]>([]);
   const [bringingGuests, setBringingGuests] = useState<boolean | null>(null);
   const [guests, setGuests] = useState<string[]>([""]);
   const [errors, setErrors] = useState<Errors>({});
@@ -192,6 +201,11 @@ function RsvpPage() {
     () => (attending && bringingGuests ? guests.map((g) => g.trim()).filter(Boolean) : []),
     [attending, bringingGuests, guests],
   );
+  const cleanAttendingDays = useMemo(
+    () =>
+      attending ? attendingDays.filter((d) => ["Friday", "Saturday", "Sunday"].includes(d)) : [],
+    [attending, attendingDays],
+  );
   const totalGuests = useMemo(
     () => (attending ? 1 + cleanGuests.length : 0),
     [attending, cleanGuests.length],
@@ -202,10 +216,11 @@ function RsvpPage() {
       fullName,
       phone,
       attending: attending === true,
+      attendingDays: cleanAttendingDays,
       bringingGuests: bringingGuests === true,
       guests: cleanGuests,
     }),
-    [fullName, phone, attending, bringingGuests, cleanGuests],
+    [fullName, phone, attending, attendingDays, bringingGuests, cleanGuests, cleanAttendingDays],
   );
 
   function review(event: FormEvent) {
@@ -229,8 +244,8 @@ function RsvpPage() {
     setSubmitError("");
     try {
       const rows = await sql`
-        INSERT INTO rsvps (full_name, phone_number, attending, additional_guests, guest_names)
-        VALUES (${fullName.trim()}, ${phone.trim()}, ${attending === true}, ${cleanGuests.length}, ${cleanGuests})
+        INSERT INTO rsvps (full_name, phone_number, attending, attending_days, additional_guests, guest_names)
+        VALUES (${fullName.trim()}, ${phone.trim()}, ${attending === true}, ${cleanAttendingDays}, ${cleanGuests.length}, ${cleanGuests})
         RETURNING id
       `;
       const data = rows[0];
@@ -241,6 +256,7 @@ function RsvpPage() {
         details: {
           fullName: fullName.trim(),
           attending: attending === true,
+          attendingDays: cleanAttendingDays,
           guests: cleanGuests.length,
         },
       });
@@ -258,7 +274,14 @@ function RsvpPage() {
     if (!value) {
       setBringingGuests(false);
       setGuests([""]);
+      setAttendingDays([]);
     }
+  }
+
+  function toggleAttendingDay(day: string) {
+    setAttendingDays((prev) =>
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
+    );
   }
 
   function handleBringingGuests(value: boolean) {
@@ -466,6 +489,8 @@ function RsvpPage() {
                   setPhone={setPhone}
                   attending={attending}
                   chooseAttendance={chooseAttendance}
+                  attendingDays={attendingDays}
+                  toggleAttendingDay={toggleAttendingDay}
                   bringingGuests={bringingGuests}
                   handleBringingGuests={handleBringingGuests}
                   guests={guests}
@@ -483,6 +508,7 @@ function RsvpPage() {
                   fullName={fullName}
                   phone={phone}
                   attending={attending === true}
+                  attendingDays={cleanAttendingDays}
                   guests={cleanGuests}
                   totalGuests={totalGuests}
                   submitting={submitting}
@@ -803,6 +829,8 @@ interface RsvpFormProps {
   setPhone: (value: string) => void;
   attending: boolean | null;
   chooseAttendance: (value: boolean) => void;
+  attendingDays: string[];
+  toggleAttendingDay: (day: string) => void;
   bringingGuests: boolean | null;
   handleBringingGuests: (value: boolean) => void;
   guests: string[];
@@ -897,6 +925,28 @@ function RsvpForm(props: RsvpFormProps) {
         {props.attending && (
           <fieldset>
             <legend className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
+              Which days will you attend?
+            </legend>
+            <div className="grid grid-cols-3 gap-2">
+              {["Friday", "Saturday", "Sunday"].map((day) => (
+                <Button
+                  key={day}
+                  type="button"
+                  variant={props.attendingDays.includes(day) ? "default" : "outline"}
+                  className="h-auto min-h-12 whitespace-normal px-3 py-3"
+                  onClick={() => props.toggleAttendingDay(day)}
+                >
+                  {day}
+                </Button>
+              ))}
+            </div>
+            <FieldError>{props.errors["attendingDays"]}</FieldError>
+          </fieldset>
+        )}
+
+        {props.attending && (
+          <fieldset>
+            <legend className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
               Bringing guests?
             </legend>
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
@@ -981,6 +1031,7 @@ interface SummaryProps {
   fullName: string;
   phone: string;
   attending: boolean;
+  attendingDays: string[];
   guests: string[];
   totalGuests: number;
   submitting: boolean;
@@ -993,6 +1044,7 @@ function Summary({
   fullName,
   phone,
   attending,
+  attendingDays,
   guests,
   totalGuests,
   submitting,
@@ -1004,6 +1056,7 @@ function Summary({
     ["Name", fullName],
     ["Phone", phone],
     ["Attendance", attending ? "Joyfully attending" : "Regretfully declining"],
+    ...(attending && attendingDays.length ? [["Days attending", attendingDays.join(", ")]] : []),
     ...(attending && guests.length ? [["Guests", guests.join(", ")]] : []),
   ];
 

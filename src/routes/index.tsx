@@ -1,11 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { party, mapEmbedUrl } from "@/lib/party";
+import { party } from "@/lib/party";
 import { useState, useEffect, useCallback } from "react";
 import mum1 from "@/assets/mum1.jpeg";
 import mum2 from "@/assets/mum2.jpeg";
 import mum3 from "@/assets/mum3.jpeg";
 import mum4 from "@/assets/mum4.jpeg";
 import mum5 from "@/assets/mum5.jpeg";
+import {
+  PartyPopper,
+  Gift,
+  Heart,
+  Sparkles,
+  Star,
+  Music,
+  Crown,
+  Cake,
+  Calendar,
+} from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -37,6 +48,17 @@ export const Route = createFileRoute("/")({
 });
 
 const mumImages = [mum1, mum2, mum3, mum4, mum5];
+
+const birthdayIcons = [
+  { Icon: PartyPopper, color: "oklch(0.65 0.22 15)" },
+  { Icon: Gift, color: "oklch(0.75 0.18 85)" },
+  { Icon: Heart, color: "oklch(0.6 0.22 20)" },
+  { Icon: Sparkles, color: "oklch(0.85 0.15 90)" },
+  { Icon: Star, color: "oklch(0.8 0.12 60)" },
+  { Icon: Music, color: "oklch(0.7 0.18 280)" },
+  { Icon: Crown, color: "oklch(0.75 0.15 65)" },
+  { Icon: Cake, color: "oklch(0.65 0.2 350)" },
+];
 
 function Countdown() {
   const [timeLeft, setTimeLeft] = useState<{
@@ -72,7 +94,7 @@ function Countdown() {
   }, []);
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mt-6">
+    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-6 lg:gap-4">
       {[
         { label: "Days", value: timeLeft.days.toString().padStart(2, "0") },
         { label: "Hours", value: timeLeft.hours.toString().padStart(2, "0") },
@@ -81,12 +103,14 @@ function Countdown() {
       ].map((item) => (
         <div
           key={item.label}
-          className="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 sm:px-6 sm:py-4 border border-white/20"
+          className="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-xl px-3 sm:px-5 lg:px-6 py-2 sm:py-3 lg:py-4 border border-white/20 min-w-[60px] sm:min-w-[70px] lg:min-w-[80px]"
         >
-          <span className="font-display text-3xl sm:text-4xl font-bold text-white tabular-nums">
+          <span className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-white tabular-nums leading-tight">
             {item.value}
           </span>
-          <span className="text-xs uppercase tracking-wider text-white/70 mt-1">{item.label}</span>
+          <span className="text-[10px] sm:text-xs uppercase tracking-wider text-white/70 mt-0.5">
+            {item.label}
+          </span>
         </div>
       ))}
     </div>
@@ -152,7 +176,6 @@ function ImageSlider() {
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 100vw"
         />
       ))}
-      {/* Dark gradients for text readability - no blur overlay */}
       <div
         className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20 z-20"
         aria-hidden="true"
@@ -162,7 +185,6 @@ function ImageSlider() {
         aria-hidden="true"
       />
 
-      {/* Navigation arrows - larger on mobile */}
       <button
         onClick={prevSlide}
         className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 p-2 sm:p-3 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50"
@@ -194,7 +216,6 @@ function ImageSlider() {
         </svg>
       </button>
 
-      {/* Dots indicator - responsive */}
       <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2 z-30">
         {mumImages.map((_, i) => (
           <button
@@ -213,7 +234,7 @@ function ImageSlider() {
 }
 
 function Confetti() {
-  const pieces = Array.from({ length: 28 });
+  const pieces = Array.from({ length: 35 });
   return (
     <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden z-25">
       {pieces.map((_, i) => (
@@ -225,13 +246,66 @@ function Confetti() {
             animationDelay: `${(i % 12) * 0.6}s`,
             animationDuration: `${5 + (i % 5)}s`,
             backgroundColor:
-              i % 3 === 0
+              i % 4 === 0
                 ? "oklch(0.85 0.15 90)"
-                : i % 3 === 1
+                : i % 4 === 1
                   ? "oklch(0.6 0.18 258)"
-                  : "oklch(0.95 0.01 250)",
+                  : i % 4 === 2
+                    ? "oklch(0.75 0.18 85)"
+                    : "oklch(0.95 0.01 250)",
           }}
         />
+      ))}
+    </div>
+  );
+}
+
+function FloatingBalloons() {
+  const balloons = Array.from({ length: 12 });
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden z-15">
+      {balloons.map((_, i) => (
+        <div
+          key={i}
+          className="absolute bottom-full"
+          style={{
+            left: `${(i * 83) % 100}%`,
+            animationDelay: `${(i % 10) * 0.8}s`,
+            animationDuration: `${8 + (i % 6)}s`,
+          }}
+        >
+          <span
+            className="balloon"
+            style={{
+              background: birthdayIcons[i % birthdayIcons.length].color,
+              width: `${16 + (i % 3) * 8}px`,
+              height: `${22 + (i % 3) * 10}px`,
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SparkleBurst() {
+  const sparkles = Array.from({ length: 20 });
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-20">
+      {sparkles.map((_, i) => (
+        <span
+          key={i}
+          className="sparkle"
+          style={{
+            left: `${10 + ((i * 41) % 80)}%`,
+            top: `${15 + ((i * 37) % 70)}%`,
+            animationDelay: `${(i % 8) * 0.4}s`,
+            animationDuration: `${2 + (i % 3)}s`,
+            color: birthdayIcons[i % birthdayIcons.length].color,
+          }}
+        >
+          <Star className="w-4 h-4" />
+        </span>
       ))}
     </div>
   );
@@ -361,32 +435,79 @@ function Index() {
       <section className="relative flex min-h-[100svh] w-full flex-col overflow-hidden bg-ink">
         <ImageSlider />
         <Confetti />
+        <FloatingBalloons />
+        <SparkleBurst />
 
-        <div className="relative z-30 flex flex-1 flex-col items-center justify-end px-4 pb-16 pt-24 text-center sm:pb-24">
-          <p className="animate-fade-up text-xs uppercase tracking-[0.4em] text-white/90 sm:text-sm">
-            You're invited to
+        <div className="relative z-30 flex flex-1 flex-col items-center justify-center px-4 pb-16 pt-20 text-center sm:pb-24 sm:pt-24">
+          <div className="animate-fade-up mb-6 flex items-center justify-center gap-2">
+            <span className="relative inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-4 py-1.5 text-xs uppercase tracking-[0.3em] text-white/90 border border-white/20">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500" />
+              </span>
+              Birthday Celebration
+            </span>
+          </div>
+
+          <p className="animate-fade-up text-xs sm:text-sm uppercase tracking-[0.4em] text-white/90 mb-4 [animation-delay:100ms]">
+            You're cordially invited to celebrate
           </p>
-          <h1 className="animate-fade-up mt-4 font-display text-5xl font-bold leading-none text-white drop-shadow-xl [animation-delay:150ms] sm:text-7xl lg:text-8xl">
-            Happy <span className="shimmer-text">70th</span> Birthday
+
+          <h1 className="animate-fade-up mt-2 font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] text-white drop-shadow-xl [animation-delay:200ms]">
+            Happy <span className="shimmer-text relative inline-block">70th</span> Birthday
           </h1>
-          <p className="animate-fade-up mt-4 font-display text-2xl font-semibold text-white [animation-delay:300ms] sm:text-3xl">
+
+          <p className="animate-fade-up mt-4 font-display text-xl sm:text-2xl lg:text-3xl font-semibold text-white/95 [animation-delay:300ms]">
             {party.celebrant}
           </p>
-          <p className="animate-fade-up mt-3 max-w-md text-sm leading-relaxed text-white/90 [animation-delay:450ms] sm:text-base">
-            Three Days of Celebration · October 23–25, 2026
-          </p>
+
+          <div className="animate-fade-up mt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-white/80 [animation-delay:400ms]">
+            <span className="flex items-center gap-1.5 text-sm sm:text-base">
+              <Cake className="w-4 h-4 sm:w-5 sm:h-5 text-pink-300" />
+              Three Days of Celebration
+            </span>
+            <span className="w-px h-6 bg-white/30 hidden sm:block" />
+            <span className="flex items-center gap-1.5 text-sm sm:text-base">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" />
+              October 23–25, 2026
+            </span>
+          </div>
 
           <Countdown />
 
-          <Link
-            to="/rsvp"
-            className="animate-fade-up mt-8 inline-flex w-full max-w-xs items-center justify-center rounded-full bg-white px-10 py-4 text-base font-semibold text-ink shadow-xl transition-transform hover:scale-105 hover:bg-white/90 [animation-delay:600ms] sm:max-w-none sm:px-14"
-          >
-            RSVP Now
-          </Link>
-          <p className="animate-fade-up mt-3 text-xs text-white/70 [animation-delay:700ms]">
-            Kindly confirm your attendance so we can plan seating and food.
+          <div className="animate-fade-up mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 [animation-delay:600ms]">
+            <Link
+              to="/rsvp"
+              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-white px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold text-ink shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/90 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-white/50"
+            >
+              <Gift className="w-5 h-5 sm:w-6 sm:h-6" />
+              RSVP Now
+            </Link>
+            <button className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold text-white transition-all duration-300 hover:bg-white/20 hover:border-white/40">
+              <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-pink-300" />
+              Save the Date
+            </button>
+          </div>
+
+          <p className="animate-fade-up mt-4 max-w-md text-sm sm:text-base leading-relaxed text-white/70 [animation-delay:700ms]">
+            Join us for three unforgettable days of praise, celebration, and thanksgiving as we
+            honor 70 years of faith, grace, and love.
           </p>
+        </div>
+
+        <div
+          className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 animate-bounce z-30"
+          aria-hidden="true"
+        >
+          <svg
+            className="w-6 h-6 sm:w-8 sm:h-8 text-white/50"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            strokeWidth={1.5}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
         </div>
       </section>
 

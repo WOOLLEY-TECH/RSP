@@ -30,6 +30,7 @@ type Rsvp = {
   full_name: string;
   phone_number: string;
   attending: boolean;
+  attending_days: string[];
   additional_guests: number;
   guest_names: string[];
   created_at: string;
@@ -127,6 +128,7 @@ function AdminPage() {
         SET full_name = ${r.full_name},
             phone_number = ${r.phone_number},
             attending = ${r.attending},
+            attending_days = ${r.attending_days},
             additional_guests = ${r.guest_names.length},
             guest_names = ${r.guest_names},
             updated_at = NOW()
@@ -136,7 +138,12 @@ function AdminPage() {
         action: "rsvp_updated",
         entityType: "rsvp",
         entityId: r.id,
-        details: { fullName: r.full_name, attending: r.attending, guests: r.guest_names.length },
+        details: {
+          fullName: r.full_name,
+          attending: r.attending,
+          attendingDays: r.attending_days,
+          guests: r.guest_names.length,
+        },
       });
     },
     onSuccess: () => {
@@ -264,6 +271,12 @@ function AdminPage() {
               <Stat label="People coming" value={totalPeople} highlight />
               <Stat label="Gifts" value={(gifts ?? []).length} />
             </div>
+            <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-3">
+              {["Friday", "Saturday", "Sunday"].map((day) => {
+                const count = attending.filter((r) => r.attending_days?.includes(day)).length;
+                return <Stat key={day} label={day} value={count} />;
+              })}
+            </div>
 
             <div className="mt-6 space-y-3">
               <input
@@ -320,6 +333,9 @@ function AdminPage() {
                   </p>
                   {r.guest_names.length > 0 && (
                     <p className="mt-1 text-sm">With: {r.guest_names.join(", ")}</p>
+                  )}
+                  {r.attending && r.attending_days && r.attending_days.length > 0 && (
+                    <p className="mt-1 text-sm text-primary">Days: {r.attending_days.join(", ")}</p>
                   )}
                   <div className="mt-4 flex gap-2">
                     <button
@@ -512,6 +528,29 @@ function AdminPage() {
                   />
                   Attending
                 </label>
+                {editing.attending && (
+                  <fieldset className="space-y-2">
+                    <legend className="text-sm font-medium">Days attending</legend>
+                    <div className="grid grid-cols-3 gap-2">
+                      {["Friday", "Saturday", "Sunday"].map((day) => (
+                        <label key={day} className="flex items-center gap-2 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editing.attending_days?.includes(day) ?? false}
+                            onChange={(e) => {
+                              const current = editing.attending_days ?? [];
+                              const next = e.target.checked
+                                ? [...current, day]
+                                : current.filter((d) => d !== day);
+                              updateEditingField("attending_days", next);
+                            }}
+                          />
+                          {day}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                )}
                 <div className="space-y-2">
                   <p className="text-sm font-medium">Additional guests</p>
                   {editing.guest_names.map((g, i) => (
