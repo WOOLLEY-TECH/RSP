@@ -11,11 +11,12 @@ import {
   Gift,
   Heart,
   Sparkles,
-  Star,
   Music,
   Crown,
   Cake,
   Calendar,
+  MessageSquare,
+  Phone,
 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -288,28 +289,7 @@ function FloatingBalloons() {
   );
 }
 
-function SparkleBurst() {
-  const sparkles = Array.from({ length: 20 });
-  return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 z-20">
-      {sparkles.map((_, i) => (
-        <span
-          key={i}
-          className="sparkle"
-          style={{
-            left: `${10 + ((i * 41) % 80)}%`,
-            top: `${15 + ((i * 37) % 70)}%`,
-            animationDelay: `${(i % 8) * 0.4}s`,
-            animationDuration: `${2 + (i % 3)}s`,
-            color: birthdayIcons[i % birthdayIcons.length].color,
-          }}
-        >
-          <Star className="w-4 h-4" />
-        </span>
-      ))}
-    </div>
-  );
-}
+
 
 function EventCard({ event }: { event: (typeof party.events)[0] & { featured?: boolean } }) {
   const gradientClass = `bg-gradient-to-br ${event.color}`;
@@ -398,9 +378,9 @@ function EventCard({ event }: { event: (typeof party.events)[0] & { featured?: b
               </span>
             </div>
             <div className="flex items-center gap-3 pt-3 border-t border-border/50">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-semibold">
                 <svg
-                  className="w-3.5 h-3.5"
+                  className="w-4 h-4"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -455,25 +435,15 @@ function Index() {
         <ImageSlider />
         <Confetti />
         <FloatingBalloons />
-        <SparkleBurst />
+        
 
         <div className="relative z-30 flex flex-1 flex-col items-center justify-center px-4 pb-16 pt-20 text-center sm:pb-24 sm:pt-24">
-          <div className="animate-fade-up mb-6 flex items-center justify-center gap-2">
-            <span className="relative inline-flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-sm px-4 py-1.5 text-xs uppercase tracking-[0.3em] text-white/90 border border-white/20">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500" />
-              </span>
-              Birthday Celebration
-            </span>
-          </div>
-
           <p className="animate-fade-up text-xs sm:text-sm uppercase tracking-[0.4em] text-white/90 mb-4 [animation-delay:100ms]">
             You're cordially invited to celebrate
           </p>
 
           <h1 className="animate-fade-up mt-2 font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] text-white drop-shadow-xl [animation-delay:200ms]">
-            Happy <span className="shimmer-text relative inline-block">70th</span> Birthday
+            <span className="shimmer-text relative inline-block">70th</span> Birthday
           </h1>
 
           <p className="animate-fade-up mt-4 font-display text-xl sm:text-2xl lg:text-3xl font-semibold text-white/95 [animation-delay:300ms]">
@@ -481,11 +451,6 @@ function Index() {
           </p>
 
           <div className="animate-fade-up mt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-white/80 [animation-delay:400ms]">
-            <span className="flex items-center gap-1.5 text-sm sm:text-base">
-              <Cake className="w-4 h-4 sm:w-5 sm:h-5 text-pink-300" />
-              Three Days of Celebration
-            </span>
-            <span className="w-px h-6 bg-white/30 hidden sm:block" />
             <span className="flex items-center gap-1.5 text-sm sm:text-base">
               <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" />
               October 23–25, 2026
@@ -497,15 +462,11 @@ function Index() {
           <div className="animate-fade-up mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 [animation-delay:600ms]">
             <Link
               to="/rsvp"
-              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-white px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold text-ink shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/90 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-white/50"
+              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-purple-100 px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold text-purple-900 shadow-xl transition-all duration-300 hover:scale-105 hover:bg-purple-200 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-purple-200/50"
             >
               <Gift className="w-5 h-5 sm:w-6 sm:h-6" />
               RSVP Now
             </Link>
-            <button className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold text-white transition-all duration-300 hover:bg-white/20 hover:border-white/40">
-              <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-pink-300" />
-              Save the Date
-            </button>
           </div>
 
           <p className="animate-fade-up mt-4 max-w-md text-sm sm:text-base leading-relaxed text-white/70 [animation-delay:700ms]">
@@ -536,11 +497,8 @@ function Index() {
             Event Schedule
           </p>
           <h2 className="font-display text-4xl sm:text-5xl font-bold text-foreground">
-            Three Days of <span className="text-primary">Faith, Grace & Love</span>
+            Celebration Program
           </h2>
-          <p className="mt-4 max-w-2xl mx-auto text-muted-foreground leading-relaxed">
-            {party.message}
-          </p>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-3">
@@ -633,6 +591,18 @@ function Index() {
         </div>
 
         <div className="mt-12 text-center">
+          <a
+            href="https://wa.me/233555313216"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+          >
+            <MessageSquare className="w-4 h-4 text-green-500" />
+            Contact Us for Event Planning: 0555313216 (WhatsApp)
+          </a>
+        </div>
+
+        <div className="mt-6 text-center">
           <Link to="/auth" className="text-xs text-muted-foreground underline">
             Organizer login
           </Link>

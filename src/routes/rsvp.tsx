@@ -532,6 +532,7 @@ function RsvpPage() {
                   phone={phone}
                   guestCount={cleanGuests.length}
                   onGiftPurchase={openGiftPurchase}
+                  onSendGift={openGift}
                 />
               )}
             </div>
@@ -540,23 +541,25 @@ function RsvpPage() {
         </div>
       </div>
 
-      {/* Floating Gift Button - Original Design */}
-      <button
-        onClick={openGift}
-        className="fixed bottom-6 right-6 z-50 animate-bounce-subtle transition-all duration-300 hover:scale-110 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-pink-500/50 pb-safe lg:pb-0"
-        aria-label="Send a gift"
-        style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
-      >
-        <div className="relative">
-          <img
-            src={giftImg}
-            alt="Send a gift"
-            className="w-16 h-16 md:w-20 md:h-20 drop-shadow-2xl"
-            loading="lazy"
-          />
-          <div className="absolute inset-0 -inset-2 rounded-full bg-gradient-to-br from-pink-500/50 to-rose-500/50 animate-pulse-ring" />
-        </div>
-      </button>
+      {/* Floating Gift Button - Only show before RSVP completion */}
+      {step !== "done" && (
+        <button
+          onClick={openGift}
+          className="fixed bottom-6 right-6 z-50 animate-bounce-subtle transition-all duration-300 hover:scale-110 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-pink-500/50 pb-safe lg:pb-0"
+          aria-label="Send a gift"
+          style={{ paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))" }}
+        >
+          <div className="relative">
+            <img
+              src={giftImg}
+              alt="Send a gift"
+              className="w-16 h-16 md:w-20 md:h-20 drop-shadow-2xl"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 -inset-2 rounded-full bg-gradient-to-br from-pink-500/50 to-rose-500/50 animate-pulse-ring" />
+          </div>
+        </button>
+      )}
 
       {/* Gift Modal - Responsive Design */}
       {giftOpen && (
@@ -1128,6 +1131,7 @@ interface DoneProps {
   phone: string;
   guestCount: number;
   onGiftPurchase?: (giftId: string) => void;
+  onSendGift?: () => void;
 }
 
 function Done({
@@ -1138,6 +1142,7 @@ function Done({
   phone,
   guestCount,
   onGiftPurchase,
+  onSendGift,
 }: DoneProps) {
   const handleWhatsAppClick = () => {
     const normalizedPhone = normalizePhoneForWhatsApp(phone);
@@ -1248,6 +1253,21 @@ function Done({
           {totalGuests === 1 ? "guest" : "guests"} confirmed
         </p>
       </div>
+
+      {onSendGift && (
+        <div className="mt-6 w-full max-w-md">
+          <button
+            onClick={onSendGift}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-pink-500 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-pink-600 hover:shadow-xl"
+          >
+            <Gift className="w-5 h-5" />
+            Send a Gift
+          </button>
+          <p className="mt-2 text-xs text-muted-foreground text-center">
+            Choose a special gift for Deborah
+          </p>
+        </div>
+      )}
 
       {renderGiftSection()}
 
