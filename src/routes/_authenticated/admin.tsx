@@ -1,21 +1,10 @@
 ﻿import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { sql } from "@/lib/neon";
-import { logActivity } from "@/lib/activity";
 import { clearSession } from "@/lib/session";
 import { party } from "@/lib/party";
-import { cn } from "@/lib/utils";
-import {
-  Users,
-  UserCheck,
-  UserX,
-  PartyPopper,
-  TrendingUp,
-  Clock,
-  ChevronRight,
-  Activity,
-} from "lucide-react";
+import { Users, UserCheck, UserX, PartyPopper, TrendingUp } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import {
   BarChart,
@@ -65,18 +54,6 @@ type Rsvp = {
   created_at: string;
 };
 
-type ActivityLog = {
-  id: string;
-  user_id: string | null;
-  action: string;
-  entity_type: string;
-  entity_id: string | null;
-  details: Record<string, unknown>;
-  ip_address: string | null;
-  user_agent: string | null;
-  created_at: string;
-};
-
 const field =
   "w-full rounded-2xl border border-input bg-card px-4 py-3 text-base outline-none focus:border-primary";
 
@@ -98,35 +75,13 @@ const sizeChartConfig = {
   count: { label: "RSVPs", color: "var(--chart-5)" },
 } satisfies ChartConfig;
 
-function timeAgo(iso: string) {
-  const ms = Date.now() - new Date(iso).getTime();
-  const sec = Math.floor(ms / 1000);
-  if (sec < 60) return `${sec}s ago`;
-  const min = Math.floor(sec / 60);
-  if (min < 60) return `${min}m ago`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}h ago`;
-  const d = Math.floor(hr / 24);
-  return d === 1 ? "yesterday" : `${d}d ago`;
-}
-
 function AdminPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "yes" | "no">("all");
   const [editing, setEditing] = useState<Rsvp | null>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "guests" | "activity">("overview");
-  const [activitySearch, setActivitySearch] = useState("");
-  const [activityFilter, setActivityFilter] = useState<string>("all");
-  const [accessLogged, setAccessLogged] = useState(false);
-
-  useEffect(() => {
-    if (!accessLogged) {
-      logActivity({ action: "admin_access", entityType: "admin" });
-      setAccessLogged(true);
-    }
-  }, [accessLogged]);
+  const [activeTab, setActiveTab] = useState<"overview" | "guests">("overview");
 
   const { data, isLoading } = useQuery({
     queryKey: ["rsvps"],
@@ -136,22 +91,12 @@ function AdminPage() {
     },
   });
 
-  const { data: activities, isLoading: activitiesLoading } = useQuery({
-    queryKey: ["activity_log"],
-    queryFn: async () => {
-      const rows = await sql`SELECT * FROM activity_log ORDER BY created_at DESC LIMIT 200`;
-      return rows as ActivityLog[];
-    },
-  });
-
   const remove = useMutation({
     mutationFn: async (id: string) => {
       await sql`DELETE FROM rsvps WHERE id = ${id}`;
-      await logActivity({ action: "rsvp_deleted", entityType: "rsvp", entityId: id });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["rsvps"] });
-      qc.invalidateQueries({ queryKey: ["activity_log"] });
     },
   });
 
@@ -168,22 +113,10 @@ function AdminPage() {
             updated_at = NOW()
         WHERE id = ${r.id}
       `;
-      await logActivity({
-        action: "rsvp_updated",
-        entityType: "rsvp",
-        entityId: r.id,
-        details: {
-          fullName: r.full_name,
-          attending: r.attending,
-          attendingDays: r.attending_days,
-          guests: r.guest_names.length,
-        },
-      });
     },
     onSuccess: () => {
       setEditing(null);
       qc.invalidateQueries({ queryKey: ["rsvps"] });
-      qc.invalidateQueries({ queryKey: ["activity_log"] });
     },
   });
 
@@ -264,21 +197,6 @@ function AdminPage() {
     return matches && f;
   });
 
-  const filteredActivities = (activities ?? []).filter((a) => {
-    const q = activitySearch.trim().toLowerCase();
-    const matches =
-      !q ||
-      a.action.toLowerCase().includes(q) ||
-      a.entity_type.toLowerCase().includes(q) ||
-      (a.entity_id && a.entity_id.toLowerCase().includes(q)) ||
-      JSON.stringify(a.details).toLowerCase().includes(q);
-    const f = activityFilter === "all" || a.action === activityFilter;
-    return matches && f;
-  });
-
-  const actionTypes = [...new Set(activities?.map((a) => a.action) ?? [])].sort();
-  const recentActivities = (activities ?? []).slice(0, 6);
-
   const updateEditingField = useCallback(<K extends keyof Rsvp>(field: K, value: Rsvp[K]) => {
     setEditing((prev) => (prev ? { ...prev, [field]: value } : null));
   }, []);
@@ -303,8 +221,7 @@ function AdminPage() {
     setEditing((prev) => (prev ? { ...prev, guest_names: [...prev.guest_names, ""] } : null));
   }, []);
 
-  const tabTitle =
-    activeTab === "overview" ? "Dashboard" : activeTab === "guests" ? "Guest List" : "Activity Log";
+  const tabTitle = activeTab === "overview" ? "Dashboard" : "Guest List";
 
   return (
     <main className="min-h-screen bg-background px-4 py-6 sm:py-8">
@@ -313,7 +230,6 @@ function AdminPage() {
           <h1 className="truncate font-display text-2xl font-bold">{tabTitle}</h1>
           <button
             onClick={() => {
-              logActivity({ action: "user_logout", entityType: "auth" });
               clearSession();
               qc.clear();
               navigate({ to: "/auth" });
@@ -326,7 +242,7 @@ function AdminPage() {
 
         <div className="mt-6 border-b border-border">
           <nav className="flex gap-1" role="tablist">
-            {(["overview", "guests", "activity"] as const).map((tab) => (
+            {(["overview", "guests"] as const).map((tab) => (
               <button
                 key={tab}
                 role="tab"
@@ -338,11 +254,7 @@ function AdminPage() {
                     : "text-muted-foreground hover:bg-accent"
                 }`}
               >
-                {tab === "overview"
-                  ? "Overview"
-                  : tab === "guests"
-                    ? `Guest List (${all.length})`
-                    : `Activity (${activities?.length ?? 0})`}
+                {tab === "overview" ? "Overview" : `Guest List (${all.length})`}
               </button>
             ))}
           </nav>
@@ -569,46 +481,6 @@ function AdminPage() {
                 </CardContent>
               </Card>
             </div>
-
-            {recentActivities.length > 0 && (
-              <Card className="mt-5 rounded-3xl shadow-card">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <Activity className="size-5 text-primary" />
-                      Recent activity
-                    </CardTitle>
-                    <CardDescription>Latest changes across the dashboard</CardDescription>
-                  </div>
-                  <button
-                    onClick={() => setActiveTab("activity")}
-                    className="inline-flex items-center gap-1 rounded-full border border-input px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
-                  >
-                    View all <ChevronRight className="size-3.5" />
-                  </button>
-                </CardHeader>
-                <CardContent>
-                  <div className="divide-y divide-border rounded-2xl border border-border">
-                    {recentActivities.map((a) => (
-                      <div key={a.id} className="flex items-center justify-between gap-4 px-4 py-3">
-                        <div className="min-w-0">
-                          <span className="inline-block rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
-                            {a.action.replace(/_/g, " ")}
-                          </span>
-                          <span className="ml-2 text-sm text-muted-foreground">
-                            {a.entity_type}
-                          </span>
-                        </div>
-                        <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="size-3" />
-                          {timeAgo(a.created_at)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </>
         )}
 
@@ -699,87 +571,6 @@ function AdminPage() {
               )}
             </div>
           </>
-        )}
-
-        {activeTab === "activity" && (
-          <div className="mt-4 space-y-3">
-            <input
-              className={field}
-              placeholder="Search activity (action, entity, details...)"
-              value={activitySearch}
-              onChange={(e) => setActivitySearch(e.target.value)}
-            />
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setActivityFilter("all")}
-                className={`rounded-full px-4 py-2 text-sm ${
-                  activityFilter === "all"
-                    ? "bg-primary text-primary-foreground"
-                    : "border border-input bg-card text-muted-foreground"
-                }`}
-              >
-                All
-              </button>
-              {actionTypes.map((action) => (
-                <button
-                  key={action}
-                  onClick={() => setActivityFilter(action)}
-                  className={`rounded-full px-4 py-2 text-sm ${
-                    activityFilter === action
-                      ? "bg-primary text-primary-foreground"
-                      : "border border-input bg-card text-muted-foreground"
-                  }`}
-                >
-                  {action.replace(/_/g, " ")}
-                </button>
-              ))}
-            </div>
-
-            {activitiesLoading && <p className="mt-6 text-sm text-muted-foreground">Loading…</p>}
-
-            <div className="mt-4 space-y-3 max-h-[60vh] overflow-y-auto">
-              {filteredActivities.map((a) => (
-                <article key={a.id} className="rounded-2xl bg-card p-4 shadow-card">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-accent-foreground">
-                          {a.action.replace(/_/g, " ")}
-                        </span>
-                        <span className="text-xs text-muted-foreground">{a.entity_type}</span>
-                        {a.entity_id && (
-                          <span className="text-xs text-muted-foreground font-mono">
-                            {a.entity_id.slice(0, 8)}…
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {new Date(a.created_at).toLocaleString()}
-                      </p>
-                      {Object.keys(a.details).length > 0 && (
-                        <details className="mt-2">
-                          <summary className="text-xs text-muted-foreground cursor-pointer">
-                            Details
-                          </summary>
-                          <pre className="mt-1 text-[10px] text-muted-foreground bg-background p-2 rounded overflow-x-auto">
-                            {JSON.stringify(a.details, null, 2)}
-                          </pre>
-                        </details>
-                      )}
-                    </div>
-                    {a.user_id && (
-                      <span className="shrink-0 text-xs text-muted-foreground font-mono">
-                        {a.user_id.slice(0, 8)}…
-                      </span>
-                    )}
-                  </div>
-                </article>
-              ))}
-              {!activitiesLoading && filteredActivities.length === 0 && (
-                <p className="text-sm text-muted-foreground">No activity to show.</p>
-              )}
-            </div>
-          </div>
         )}
 
         {editing && (
