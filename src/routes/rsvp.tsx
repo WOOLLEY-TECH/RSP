@@ -47,6 +47,7 @@ const rsvpSchema = z
   .object({
     fullName: z.string().trim().min(2, "Please enter your full name.").max(100),
     phone: z.string().trim().min(7, "Please enter a valid phone number.").max(20),
+    email: z.string().trim().email("Please enter a valid email address.").max(200),
     attending: z.boolean(),
     attendingDays: z.array(z.enum(["Friday", "Saturday", "Sunday"])).optional(),
     bringingGuests: z.boolean(),
@@ -127,6 +128,7 @@ function RsvpPage() {
   const [step, setStep] = useState<Step>("form");
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [attending, setAttending] = useState<boolean | null>(null);
   const [attendingDays, setAttendingDays] = useState<string[]>([]);
   const [bringingGuests, setBringingGuests] = useState<boolean | null>(null);
@@ -153,12 +155,22 @@ function RsvpPage() {
     () => ({
       fullName,
       phone,
+      email,
       attending: attending === true,
       attendingDays: cleanAttendingDays,
       bringingGuests: bringingGuests === true,
       guests: cleanGuests,
     }),
-    [fullName, phone, attending, attendingDays, bringingGuests, cleanGuests, cleanAttendingDays],
+    [
+      fullName,
+      phone,
+      email,
+      attending,
+      attendingDays,
+      bringingGuests,
+      cleanGuests,
+      cleanAttendingDays,
+    ],
   );
 
   function review(event: FormEvent) {
@@ -182,8 +194,8 @@ function RsvpPage() {
     setSubmitError("");
     try {
       const rows = await sql`
-        INSERT INTO rsvps (full_name, phone_number, attending, attending_days, additional_guests, guest_names)
-        VALUES (${fullName.trim()}, ${phone.trim()}, ${attending === true}, ${cleanAttendingDays}, ${cleanGuests.length}, ${cleanGuests})
+        INSERT INTO rsvps (full_name, phone_number, email, attending, attending_days, additional_guests, guest_names)
+        VALUES (${fullName.trim()}, ${phone.trim()}, ${email.trim().toLowerCase()}, ${attending === true}, ${cleanAttendingDays}, ${cleanGuests.length}, ${cleanGuests})
         RETURNING id
       `;
       const data = rows[0];
@@ -198,6 +210,9 @@ function RsvpPage() {
           guests: cleanGuests.length,
         },
       });
+      sendConfirmationEmail().catch(() => {
+        // Email delivery must never block the RSVP confirmation.
+      });
       setSubmitting(false);
       setStep("done");
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -209,6 +224,27 @@ function RsvpPage() {
           ? "Database not updated yet. Please contact the organizer."
           : "Something went wrong. Please try again.",
       );
+    }
+  }
+
+  async function sendConfirmationEmail() {
+    const trimmed = email.trim();
+    if (!trimmed) return;
+    try {
+      await fetch("/api/send-confirmation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: trimmed.toLowerCase(),
+          fullName: fullName.trim(),
+          attending: attending === true,
+          attendingDays: cleanAttendingDays,
+          guests: cleanGuests,
+        }),
+        signal: AbortSignal.timeout(8000),
+      });
+    } catch (error) {
+      console.error("Confirmation email could not be sent:", error);
     }
   }
 
@@ -318,6 +354,8 @@ function RsvpPage() {
                   setFullName={setFullName}
                   phone={phone}
                   setPhone={setPhone}
+                  email={email}
+                  setEmail={setEmail}
                   attending={attending}
                   chooseAttendance={chooseAttendance}
                   attendingDays={attendingDays}
@@ -338,6 +376,7 @@ function RsvpPage() {
                 <Summary
                   fullName={fullName}
                   phone={phone}
+                  email={email}
                   attending={attending === true}
                   attendingDays={cleanAttendingDays}
                   guests={cleanGuests}
@@ -372,6 +411,8 @@ interface RsvpFormProps {
   setFullName: (value: string) => void;
   phone: string;
   setPhone: (value: string) => void;
+  email: string;
+  setEmail: (value: string) => void;
   attending: boolean | null;
   chooseAttendance: (value: boolean) => void;
   attendingDays: string[];
@@ -441,6 +482,26 @@ function RsvpForm(props: RsvpFormProps) {
             aria-invalid={Boolean(props.errors["phone"])}
           />
           <FieldError>{props.errors["phone"]}</FieldError>
+        </div>
+
+        <div>
+          <Label
+            htmlFor="email"
+            className="mb-2 block text-xs font-semibold uppercase text-muted-foreground"
+          >
+            Email address
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            value={props.email}
+            onChange={(event) => props.setEmail(event.target.value)}
+            placeholder="you@example.com"
+            autoComplete="email"
+            className={props.inputClass}
+            aria-invalid={Boolean(props.errors["email"])}
+          />
+          <FieldError>{props.errors["email"]}</FieldError>
         </div>
 
         <fieldset>
@@ -575,6 +636,7 @@ function RsvpForm(props: RsvpFormProps) {
 interface SummaryProps {
   fullName: string;
   phone: string;
+  email: string;
   attending: boolean;
   attendingDays: string[];
   guests: string[];
@@ -588,6 +650,7 @@ interface SummaryProps {
 function Summary({
   fullName,
   phone,
+  email,
   attending,
   attendingDays,
   guests,
@@ -600,6 +663,7 @@ function Summary({
   const rows = [
     ["Name", fullName],
     ["Phone", phone],
+    ["Email", email],
     ["Attendance", attending ? "Joyfully attending" : "Regretfully declining"],
     ...(attending && attendingDays.length ? [["Days attending", attendingDays.join(", ")]] : []),
     ...(attending && guests.length ? [["Guests", guests.join(", ")]] : []),

@@ -10,12 +10,17 @@ export async function initializeDatabase() {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       full_name TEXT NOT NULL,
       phone_number TEXT NOT NULL,
+      email TEXT NOT NULL DEFAULT '',
       attending BOOLEAN NOT NULL,
       additional_guests INTEGER NOT NULL DEFAULT 0,
       guest_names TEXT[] NOT NULL DEFAULT '{}',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
+  `;
+
+  await sql`
+    ALTER TABLE rsvps ADD COLUMN IF NOT EXISTS email TEXT NOT NULL DEFAULT ''
   `;
 
   await sql`
