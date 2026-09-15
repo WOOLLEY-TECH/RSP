@@ -2,24 +2,53 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { sql } from "@/lib/neon";
-import { getActivityLog, logActivity, type ActivityAction } from "@/lib/activity";
+import { logActivity } from "@/lib/activity";
 import { clearSession } from "@/lib/session";
-import balloon from "@/assets/gift/balloon.png";
-import celebrate from "@/assets/gift/celebrate.png";
-import crown from "@/assets/gift/crown.png";
-import cupcake from "@/assets/gift/cupcake.png";
-import flowerBouquet from "@/assets/gift/flower-bouquet.png";
-import heart from "@/assets/gift/heart.png";
-import rose from "@/assets/gift/rose-.png";
-import teddyBear from "@/assets/gift/teddy-bear.png";
+import { party } from "@/lib/party";
+import { cn } from "@/lib/utils";
+import {
+  Users,
+  UserCheck,
+  UserX,
+  PartyPopper,
+  TrendingUp,
+  Clock,
+  ChevronRight,
+  Activity,
+} from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import {
+  BarChart,
+  Bar,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({
     meta: [
-      { title: "Guest List Dashboard — Birthday RSVP" },
-      { name: "description", content: "Track RSVPs, attendance and the total expected guests." },
-      { property: "og:title", content: "Guest List Dashboard — Birthday RSVP" },
-      { property: "og:description", content: "Private organizer dashboard." },
+      { title: "Organizer Dashboard — Birthday RSVP" },
+      {
+        name: "description",
+        content: "Track RSVPs, attendance, analytics and total expected guests.",
+      },
+      { property: "og:title", content: "Organizer Dashboard — Birthday RSVP" },
+      {
+        property: "og:description",
+        content: "Private analytical dashboard for the party organizer.",
+      },
     ],
   }),
   component: AdminPage,
@@ -48,23 +77,37 @@ type ActivityLog = {
   created_at: string;
 };
 
-type Gift = {
-  id: string;
-  gifter_name: string;
-  gifter_phone: string;
-  gifter_email: string | null;
-  gift_message: string;
-  created_at: string;
-};
-
 const field =
   "w-full rounded-2xl border border-input bg-card px-4 py-3 text-base outline-none focus:border-primary";
 
-const giftImages = [balloon, celebrate, crown, cupcake, flowerBouquet, heart, rose, teddyBear];
+const breakdownChartConfig = {
+  attending: { label: "Attending", color: "var(--chart-1)" },
+  declining: { label: "Not attending", color: "var(--chart-3)" },
+} satisfies ChartConfig;
 
-function getGiftImage(id: string) {
-  const idx = id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return giftImages[idx % giftImages.length];
+const dayChartConfig = {
+  people: { label: "People", color: "var(--chart-2)" },
+} satisfies ChartConfig;
+
+const trendChartConfig = {
+  total: { label: "Cumulative RSVPs", color: "var(--chart-1)" },
+  signups: { label: "New RSVPs", color: "var(--chart-4)" },
+} satisfies ChartConfig;
+
+const sizeChartConfig = {
+  count: { label: "RSVPs", color: "var(--chart-5)" },
+} satisfies ChartConfig;
+
+function timeAgo(iso: string) {
+  const ms = Date.now() - new Date(iso).getTime();
+  const sec = Math.floor(ms / 1000);
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const d = Math.floor(hr / 24);
+  return d === 1 ? "yesterday" : `${d}d ago`;
 }
 
 function AdminPage() {
@@ -73,10 +116,9 @@ function AdminPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "yes" | "no">("all");
   const [editing, setEditing] = useState<Rsvp | null>(null);
-  const [activeTab, setActiveTab] = useState<"guests" | "activity" | "gifts">("guests");
+  const [activeTab, setActiveTab] = useState<"overview" | "guests" | "activity">("overview");
   const [activitySearch, setActivitySearch] = useState("");
   const [activityFilter, setActivityFilter] = useState<string>("all");
-  const [giftSearch, setGiftSearch] = useState("");
   const [accessLogged, setAccessLogged] = useState(false);
 
   useEffect(() => {
@@ -86,7 +128,7 @@ function AdminPage() {
     }
   }, [accessLogged]);
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["rsvps"],
     queryFn: async () => {
       const rows = await sql`SELECT * FROM rsvps ORDER BY created_at DESC`;
@@ -99,14 +141,6 @@ function AdminPage() {
     queryFn: async () => {
       const rows = await sql`SELECT * FROM activity_log ORDER BY created_at DESC LIMIT 200`;
       return rows as ActivityLog[];
-    },
-  });
-
-  const { data: gifts, isLoading: giftsLoading } = useQuery({
-    queryKey: ["gifts"],
-    queryFn: async () => {
-      const rows = await sql`SELECT * FROM gifts ORDER BY created_at DESC`;
-      return rows as Gift[];
     },
   });
 
@@ -153,6 +187,75 @@ function AdminPage() {
     },
   });
 
+  const all = useMemo(() => data ?? [], [data]);
+  const attending = useMemo(() => all.filter((r) => r.attending), [all]);
+  const declining = all.length - attending.length;
+  const totalPeople = useMemo(
+    () => attending.reduce((sum, r) => sum + 1 + r.guest_names.length, 0),
+    [attending],
+  );
+  const avgGuests = attending.length ? totalPeople / attending.length : 0;
+  const responseRate = all.length > 0 ? Math.round((attending.length / all.length) * 100) : 0;
+
+  const dayStats = useMemo(
+    () =>
+      party.events.map((event) => {
+        const dayRsvps = attending.filter((r) => r.attending_days?.includes(event.day));
+        return {
+          day: event.day,
+          short: event.day.slice(0, 3),
+          people: dayRsvps.reduce((sum, r) => sum + 1 + r.guest_names.length, 0),
+          rsvps: dayRsvps.length,
+        };
+      }),
+    [attending],
+  );
+
+  const breakdownData = useMemo(
+    () => [
+      { name: "attending", value: attending.length },
+      { name: "declining", value: declining },
+    ],
+    [attending.length, declining],
+  );
+
+  const trendData = useMemo(() => {
+    const sorted = [...all].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+    );
+    const map = new Map<string, { signups: number; label: string }>();
+    for (const r of sorted) {
+      const d = new Date(r.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const existing = map.get(key);
+      if (existing) {
+        existing.signups += 1;
+      } else {
+        map.set(key, {
+          signups: 1,
+          label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+        });
+      }
+    }
+    let cumulative = 0;
+    return [...map.entries()].map(([, v]) => {
+      cumulative += v.signups;
+      return { label: v.label, signups: v.signups, total: cumulative };
+    });
+  }, [all]);
+
+  const sizeData = useMemo(() => {
+    const buckets = Array.from({ length: 6 }, (_, i) => ({
+      label: i === 5 ? "5+" : `${i}`,
+      count: 0,
+    }));
+    for (const r of attending) {
+      const idx = Math.min(r.guest_names.length, 5);
+      buckets[idx]!.count += 1;
+    }
+    return buckets;
+  }, [attending]);
+
   const rows = (data ?? []).filter((r) => {
     const q = search.trim().toLowerCase();
     const matches =
@@ -160,10 +263,6 @@ function AdminPage() {
     const f = filter === "all" || (filter === "yes" ? r.attending : !r.attending);
     return matches && f;
   });
-
-  const all = data ?? [];
-  const attending = all.filter((r) => r.attending);
-  const totalPeople = attending.reduce((sum, r) => sum + 1 + r.guest_names.length, 0);
 
   const filteredActivities = (activities ?? []).filter((a) => {
     const q = activitySearch.trim().toLowerCase();
@@ -178,6 +277,7 @@ function AdminPage() {
   });
 
   const actionTypes = [...new Set(activities?.map((a) => a.action) ?? [])].sort();
+  const recentActivities = (activities ?? []).slice(0, 6);
 
   const updateEditingField = useCallback(<K extends keyof Rsvp>(field: K, value: Rsvp[K]) => {
     setEditing((prev) => (prev ? { ...prev, [field]: value } : null));
@@ -203,11 +303,14 @@ function AdminPage() {
     setEditing((prev) => (prev ? { ...prev, guest_names: [...prev.guest_names, ""] } : null));
   }, []);
 
+  const tabTitle =
+    activeTab === "overview" ? "Dashboard" : activeTab === "guests" ? "Guest List" : "Activity Log";
+
   return (
-    <main className="min-h-screen bg-background px-4 py-8">
-      <div className="mx-auto max-w-5xl">
+    <main className="min-h-screen bg-background px-4 py-6 sm:py-8">
+      <div className="mx-auto max-w-6xl">
         <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
-          <h1 className="truncate font-display text-2xl font-bold">Guest list</h1>
+          <h1 className="truncate font-display text-2xl font-bold">{tabTitle}</h1>
           <button
             onClick={() => {
               logActivity({ action: "user_logout", entityType: "auth" });
@@ -223,62 +326,303 @@ function AdminPage() {
 
         <div className="mt-6 border-b border-border">
           <nav className="flex gap-1" role="tablist">
-            <button
-              role="tab"
-              aria-selected={activeTab === "guests"}
-              onClick={() => setActiveTab("guests")}
-              className={`rounded-t-2xl px-4 py-2 text-sm font-medium transition-colors ${
-                activeTab === "guests"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent"
-              }`}
-            >
-              Guest List ({all.length})
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeTab === "gifts"}
-              onClick={() => setActiveTab("gifts")}
-              className={`rounded-t-2xl px-4 py-2 text-sm font-medium transition-colors ${
-                activeTab === "gifts"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent"
-              }`}
-            >
-              Gifts ({(gifts ?? []).length})
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeTab === "activity"}
-              onClick={() => setActiveTab("activity")}
-              className={`rounded-t-2xl px-4 py-2 text-sm font-medium transition-colors ${
-                activeTab === "activity"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent"
-              }`}
-            >
-              Activity Log ({activities?.length ?? 0})
-            </button>
+            {(["overview", "guests", "activity"] as const).map((tab) => (
+              <button
+                key={tab}
+                role="tab"
+                aria-selected={activeTab === tab}
+                onClick={() => setActiveTab(tab)}
+                className={`rounded-t-2xl px-4 py-2 text-sm font-medium transition-colors ${
+                  activeTab === tab
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-accent"
+                }`}
+              >
+                {tab === "overview"
+                  ? "Overview"
+                  : tab === "guests"
+                    ? `Guest List (${all.length})`
+                    : `Activity (${activities?.length ?? 0})`}
+              </button>
+            ))}
           </nav>
         </div>
 
-        {activeTab === "guests" && (
+        {activeTab === "overview" && (
           <>
-            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
-              <Stat label="RSVPs" value={all.length} />
-              <Stat label="Attending" value={attending.length} />
-              <Stat label="Not attending" value={all.length - attending.length} />
-              <Stat label="People coming" value={totalPeople} highlight />
-              <Stat label="Gifts" value={(gifts ?? []).length} />
-            </div>
-            <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-3">
-              {["Friday", "Saturday", "Sunday"].map((day) => {
-                const count = attending.filter((r) => r.attending_days?.includes(day)).length;
-                return <Stat key={day} label={day} value={count} />;
-              })}
+            {!isLoading && all.length === 0 && (
+              <div className="mt-6 rounded-2xl border border-border bg-card p-6 text-center shadow-card">
+                <p className="text-muted-foreground">
+                  No RSVPs recorded yet — charts will populate as guests respond.
+                </p>
+              </div>
+            )}
+
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              <KpiCard
+                icon={Users}
+                label="Total RSVPs"
+                value={all.length}
+                sub="responses received"
+              />
+              <KpiCard
+                icon={UserCheck}
+                label="Attending"
+                value={attending.length}
+                sub={`${responseRate}% of responses`}
+              />
+              <KpiCard
+                icon={UserX}
+                label="Not attending"
+                value={declining}
+                sub={`${all.length - attending.length} declined`}
+              />
+              <KpiCard
+                icon={PartyPopper}
+                label="People coming"
+                value={totalPeople}
+                highlight
+                sub="total guests confirmed"
+              />
+              <KpiCard
+                icon={Users}
+                label="Avg. party size"
+                value={Number(avgGuests.toFixed(1))}
+                sub="guests per RSVP"
+              />
             </div>
 
-            <div className="mt-6 space-y-3">
+            <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-3">
+              <Card className="rounded-3xl shadow-card lg:col-span-1">
+                <CardHeader>
+                  <CardTitle>Response breakdown</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center">
+                  <div className="relative h-60 w-full">
+                    <ChartContainer
+                      config={breakdownChartConfig}
+                      className="absolute inset-0 h-full w-full"
+                      style={{ aspectRatio: "auto" }}
+                    >
+                      <PieChart>
+                        <ChartTooltip
+                          cursor={false}
+                          content={<ChartTooltipContent hideLabel hideIndicator />}
+                        />
+                        <Pie
+                          data={breakdownData}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={55}
+                          outerRadius={80}
+                          paddingAngle={4}
+                          strokeWidth={0}
+                        >
+                          <Cell fill="var(--color-attending)" />
+                          <Cell fill="var(--color-declining)" />
+                        </Pie>
+                      </PieChart>
+                    </ChartContainer>
+                    <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-3xl font-bold">{all.length}</span>
+                      <span className="text-xs text-muted-foreground">total</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center gap-5 text-sm">
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="inline-block size-3 rounded-sm"
+                        style={{ backgroundColor: "var(--chart-1)" }}
+                      />
+                      Attending ({attending.length})
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="inline-block size-3 rounded-sm"
+                        style={{ backgroundColor: "var(--chart-3)" }}
+                      />
+                      Declined ({declining})
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl shadow-card lg:col-span-2">
+                <CardHeader>
+                  <CardTitle>Attendance by event day</CardTitle>
+                  <CardDescription>Number of people confirmed for each day</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer
+                    config={dayChartConfig}
+                    className="h-64 w-full"
+                    style={{ aspectRatio: "auto" }}
+                  >
+                    <BarChart data={dayStats} barSize={48}>
+                      <CartesianGrid vertical={false} />
+                      <XAxis
+                        dataKey="day"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                        fontSize={13}
+                        fontWeight={600}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        width={28}
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={4}
+                      />
+                      <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                      <Bar dataKey="people" fill="var(--color-people)" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="mt-5 grid grid-cols-1 gap-3 lg:grid-cols-2">
+              <Card className="rounded-3xl shadow-card">
+                <CardHeader>
+                  <CardTitle>RSVP trend</CardTitle>
+                  <CardDescription>Cumulative responses over time</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {trendData.length > 0 ? (
+                    <ChartContainer
+                      config={trendChartConfig}
+                      className="h-64 w-full"
+                      style={{ aspectRatio: "auto" }}
+                    >
+                      <AreaChart data={trendData}>
+                        <CartesianGrid vertical={false} />
+                        <XAxis
+                          dataKey="label"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={8}
+                          fontSize={12}
+                          interval="preserveStartEnd"
+                        />
+                        <YAxis
+                          allowDecimals={false}
+                          width={28}
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={4}
+                        />
+                        <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                        <Area
+                          type="monotone"
+                          dataKey="total"
+                          fill="var(--color-total)"
+                          fillOpacity={0.15}
+                          stroke="var(--color-total)"
+                          strokeWidth={2.5}
+                        />
+                      </AreaChart>
+                    </ChartContainer>
+                  ) : (
+                    <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+                      No data yet
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-3xl shadow-card">
+                <CardHeader>
+                  <CardTitle>Party size distribution</CardTitle>
+                  <CardDescription>Number of extra guests per attending RSVP</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer
+                    config={sizeChartConfig}
+                    className="h-64 w-full"
+                    style={{ aspectRatio: "auto" }}
+                  >
+                    <BarChart data={sizeData} barSize={48}>
+                      <CartesianGrid vertical={false} />
+                      <XAxis
+                        dataKey="label"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                        fontSize={12}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        width={28}
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={4}
+                      />
+                      <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent nameKey="count" />}
+                      />
+                      <Bar dataKey="count" fill="var(--color-count)" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </div>
+
+            {recentActivities.length > 0 && (
+              <Card className="mt-5 rounded-3xl shadow-card">
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <Activity className="size-5 text-primary" />
+                      Recent activity
+                    </CardTitle>
+                    <CardDescription>Latest changes across the dashboard</CardDescription>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("activity")}
+                    className="inline-flex items-center gap-1 rounded-full border border-input px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+                  >
+                    View all <ChevronRight className="size-3.5" />
+                  </button>
+                </CardHeader>
+                <CardContent>
+                  <div className="divide-y divide-border rounded-2xl border border-border">
+                    {recentActivities.map((a) => (
+                      <div key={a.id} className="flex items-center justify-between gap-4 px-4 py-3">
+                        <div className="min-w-0">
+                          <span className="inline-block rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                            {a.action.replace(/_/g, " ")}
+                          </span>
+                          <span className="ml-2 text-sm text-muted-foreground">
+                            {a.entity_type}
+                          </span>
+                        </div>
+                        <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                          <Clock className="size-3" />
+                          {timeAgo(a.created_at)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+
+        {activeTab === "guests" && (
+          <>
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              <KpiCard icon={Users} label="RSVPs" value={all.length} />
+              <KpiCard icon={UserCheck} label="Attending" value={attending.length} />
+              <KpiCard icon={UserX} label="Not attending" value={declining} />
+              <KpiCard icon={PartyPopper} label="People coming" value={totalPeople} highlight />
+              <KpiCard icon={Users} label="Avg. party size" value={Number(avgGuests.toFixed(1))} />
+            </div>
+
+            <div className="mt-5 space-y-3">
               <input
                 className={field}
                 placeholder="Search by name or phone"
@@ -303,11 +647,6 @@ function AdminPage() {
             </div>
 
             {isLoading && <p className="mt-6 text-sm text-muted-foreground">Loading…</p>}
-            {error && (
-              <p className="mt-6 text-sm text-destructive">
-                You don't have permission to view the guest list.
-              </p>
-            )}
 
             <div className="mt-4 space-y-3">
               {rows.map((r) => (
@@ -443,68 +782,6 @@ function AdminPage() {
           </div>
         )}
 
-        {activeTab === "gifts" && (
-          <div className="mt-4 space-y-3">
-            <input
-              className={field}
-              placeholder="Search gifts (name, phone, message...)"
-              value={giftSearch}
-              onChange={(e) => setGiftSearch(e.target.value)}
-            />
-
-            <div className="mt-4 space-y-3 max-h-[60vh] overflow-y-auto">
-              {(() => {
-                const q = giftSearch.trim().toLowerCase();
-                const filteredGifts = (gifts ?? []).filter((g) => {
-                  return (
-                    !q ||
-                    g.gifter_name.toLowerCase().includes(q) ||
-                    g.gifter_phone.toLowerCase().includes(q) ||
-                    (g.gifter_email && g.gifter_email.toLowerCase().includes(q)) ||
-                    g.gift_message.toLowerCase().includes(q)
-                  );
-                });
-
-                if (filteredGifts.length === 0) {
-                  return (
-                    <p className="text-sm text-muted-foreground">
-                      {giftsLoading ? "Loading…" : "No gifts recorded yet."}
-                    </p>
-                  );
-                }
-
-                return filteredGifts.map((g) => {
-                  const giftImage = getGiftImage(g.id);
-                  return (
-                    <article key={g.id} className="rounded-2xl bg-card p-4 shadow-card">
-                      <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div className="shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-primary-soft flex items-center justify-center">
-                          <img src={giftImage} alt="Gift" className="w-10 h-10 object-contain" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-accent-foreground">
-                              Gift
-                            </span>
-                            <span className="text-sm font-medium">{g.gifter_name}</span>
-                          </div>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {g.gifter_phone} {g.gifter_email && `· ${g.gifter_email}`}
-                          </p>
-                          <p className="mt-2 text-sm text-foreground">{g.gift_message}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {new Date(g.created_at).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                });
-              })()}
-            </div>
-          </div>
-        )}
-
         {editing && (
           <div className="fixed inset-0 z-50 flex items-end bg-ink/50 p-4 sm:items-center">
             <div className="mx-auto w-full max-w-md rounded-3xl bg-card p-6 shadow-card">
@@ -603,13 +880,47 @@ function AdminPage() {
   );
 }
 
-function Stat({ label, value, highlight }: { label: string; value: number; highlight?: boolean }) {
+function KpiCard({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  highlight,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: number | string;
+  sub?: string;
+  highlight?: boolean;
+}) {
   return (
     <div
-      className={`rounded-2xl p-4 ${highlight ? "bg-hero-gradient text-primary-foreground" : "bg-card shadow-card"}`}
+      className={`rounded-3xl p-5 transition-shadow ${
+        highlight
+          ? "bg-hero-gradient text-primary-foreground shadow-lg"
+          : "bg-card shadow-card hover:shadow-md"
+      }`}
     >
-      <p className="text-2xl font-bold">{value}</p>
-      <p className="text-xs uppercase tracking-wide opacity-70">{label}</p>
+      <div className="flex items-center justify-between">
+        <p
+          className={`text-xs uppercase tracking-wide ${highlight ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+        >
+          {label}
+        </p>
+        <div
+          className={`grid size-8 place-items-center rounded-xl ${highlight ? "bg-primary-foreground/20" : "bg-primary/10"}`}
+        >
+          <Icon className={`size-4 ${highlight ? "text-primary-foreground" : "text-primary"}`} />
+        </div>
+      </div>
+      <p className="mt-3 text-3xl font-bold tabular-nums leading-none">{value}</p>
+      {sub && (
+        <p
+          className={`mt-1.5 text-xs ${highlight ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+        >
+          {sub}
+        </p>
+      )}
     </div>
   );
 }

@@ -6,8 +6,7 @@ export type ActivityAction =
   | "rsvp_deleted"
   | "user_login"
   | "user_logout"
-  | "admin_access"
-  | "gift_submitted";
+  | "admin_access";
 
 export async function logActivity({
   action,

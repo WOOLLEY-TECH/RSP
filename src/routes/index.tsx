@@ -6,18 +6,7 @@ import mum2 from "@/assets/mum2.jpeg";
 import mum3 from "@/assets/mum3.jpeg";
 import mum4 from "@/assets/mum4.jpeg";
 import mum5 from "@/assets/mum5.jpeg";
-import {
-  PartyPopper,
-  Gift,
-  Heart,
-  Sparkles,
-  Music,
-  Crown,
-  Cake,
-  Calendar,
-  MessageSquare,
-  Phone,
-} from "lucide-react";
+import { PartyPopper, Heart, Sparkles, Music, Crown, Cake, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -52,7 +41,6 @@ const mumImages = [mum1, mum2, mum3, mum4, mum5];
 
 const birthdayIcons = [
   { Icon: PartyPopper, color: "oklch(0.65 0.22 15)" },
-  { Icon: Gift, color: "oklch(0.75 0.18 85)" },
   { Icon: Heart, color: "oklch(0.6 0.22 20)" },
   { Icon: Sparkles, color: "oklch(0.85 0.15 90)" },
   { Icon: Music, color: "oklch(0.7 0.18 280)" },
@@ -288,8 +276,6 @@ function FloatingBalloons() {
   );
 }
 
-
-
 function EventCard({ event }: { event: (typeof party.events)[0] & { featured?: boolean } }) {
   const gradientClass = `bg-gradient-to-br ${event.color}`;
   const isFeatured = event.featured;
@@ -434,7 +420,6 @@ function Index() {
         <ImageSlider />
         <Confetti />
         <FloatingBalloons />
-        
 
         <div className="relative z-30 flex flex-1 flex-col items-center justify-center px-4 pb-16 pt-20 text-center sm:pb-24 sm:pt-24">
           <p className="animate-fade-up text-xs sm:text-sm uppercase tracking-[0.4em] text-white/90 mb-4 [animation-delay:100ms]">
@@ -463,7 +448,6 @@ function Index() {
               to="/rsvp"
               className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-purple-100 px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold text-purple-900 shadow-xl transition-all duration-300 hover:scale-105 hover:bg-purple-200 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-purple-200/50"
             >
-              <Gift className="w-5 h-5 sm:w-6 sm:h-6" />
               RSVP Now
             </Link>
           </div>
@@ -587,24 +571,6 @@ function Index() {
               </div>
             </div>
           ))}
-        </div>
-
-        <div className="mt-12 text-center">
-          <a
-            href="https://wa.me/233555313216"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
-          >
-            <MessageSquare className="w-4 h-4 text-green-500" />
-            Contact Us for Event Planning: 0555313216 (WhatsApp)
-          </a>
-        </div>
-
-        <div className="mt-6 text-center">
-          <Link to="/auth" className="text-xs text-muted-foreground underline">
-            Organizer login
-          </Link>
         </div>
       </section>
     </main>

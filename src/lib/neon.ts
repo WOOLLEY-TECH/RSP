@@ -33,26 +33,11 @@ export async function initializeDatabase() {
   `;
 
   await sql`
-    CREATE TABLE IF NOT EXISTS gifts (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      gifter_name TEXT NOT NULL,
-      gifter_phone TEXT NOT NULL,
-      gifter_email TEXT,
-      gift_message TEXT NOT NULL,
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    )
-  `;
-
-  await sql`
     CREATE INDEX IF NOT EXISTS idx_rsvps_created_at ON rsvps (created_at DESC)
   `;
 
   await sql`
     CREATE INDEX IF NOT EXISTS idx_activity_log_created_at ON activity_log (created_at DESC)
-  `;
-
-  await sql`
-    CREATE INDEX IF NOT EXISTS idx_gifts_created_at ON gifts (created_at DESC)
   `;
 }
 
