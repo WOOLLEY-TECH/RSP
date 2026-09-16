@@ -18,7 +18,7 @@ import { sql } from "@/lib/neon";
 import { party, mapEmbedUrl } from "@/lib/party";
 import { logActivity } from "@/lib/activity";
 import mum5 from "@/assets/mum5.jpeg";
-import linkShare from "@/assets/link share.jpeg";
+import linkShare from "@/assets/link.jpeg";
 
 export const Route = createFileRoute("/rsvp")({
   head: () => ({

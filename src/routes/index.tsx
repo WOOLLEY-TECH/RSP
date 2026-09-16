@@ -6,7 +6,7 @@ import mum2 from "@/assets/mum2.jpeg";
 import mum3 from "@/assets/mum3.jpeg";
 import mum4 from "@/assets/mum4.jpeg";
 import mum5 from "@/assets/mum5.jpeg";
-import linkShare from "@/assets/link share.jpeg";
+import linkShare from "@/assets/link.jpeg";
 import { PartyPopper, Heart, Sparkles, Music, Crown, Cake, Calendar, Link2 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
