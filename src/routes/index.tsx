@@ -7,7 +7,7 @@ import mum3 from "@/assets/mum3.jpeg";
 import mum4 from "@/assets/mum4.jpeg";
 import mum5 from "@/assets/mum5.jpeg";
 import linkShare from "@/assets/link.jpeg";
-import { PartyPopper, Heart, Sparkles, Music, Crown, Cake, Link2 } from "lucide-react";
+import { PartyPopper, Heart, Sparkles, Music, Crown, Cake, Link2, X } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -415,7 +415,7 @@ function EventCard({ event }: { event: (typeof party.events)[0] & { featured?: b
 }
 
 function Index() {
-  const [copied, setCopied] = useState(false);
+  const [showInvitation, setShowInvitation] = useState(false);
   return (
     <main className="min-h-screen w-full bg-background">
       <section className="relative flex min-h-[100svh] w-full flex-col overflow-hidden bg-ink">
@@ -423,16 +423,16 @@ function Index() {
         <Confetti />
         <FloatingBalloons />
 
-        <div className="relative z-30 flex flex-1 flex-col items-center justify-center px-4 pb-16 pt-20 text-center sm:pb-24 sm:pt-24">
-          <p className="animate-fade-up mt-8 text-sm sm:text-base lg:text-lg font-medium tracking-wider uppercase text-white/70 [animation-delay:150ms]">
-            You're Cordially Invited to Celebrate
+        <div className="relative z-30 flex flex-1 flex-col items-center justify-start px-4 pb-20 pt-12 text-center sm:pb-24 sm:pt-16">
+          <p className="animate-fade-up text-sm sm:text-base lg:text-lg font-semibold tracking-[0.2em] uppercase text-white/80 [animation-delay:150ms]">
+            You Are Cordially Invited to Celebrate
           </p>
-          <h1 className="animate-fade-up mt-3 font-display text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.15] text-white drop-shadow-xl [animation-delay:250ms]">
-            {party.celebrant}
-          </h1>
-          <h2 className="animate-fade-up mt-2 font-display text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold leading-[1.2] text-white drop-shadow-xl [animation-delay:350ms]">
-            <span className="shimmer-text relative inline-block">70th Birthday</span>
+          <h2 className="animate-fade-up mt-3 font-display text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-xl [animation-delay:250ms]">
+            The 70th Birthday of
           </h2>
+          <h1 className="animate-fade-up mt-2 font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] text-white drop-shadow-xl [animation-delay:350ms]">
+            <span className="shimmer-text relative inline-block">{party.celebrant}</span>
+          </h1>
 
           <div className="animate-fade-up mt-6 inline-flex flex-wrap items-center justify-center gap-x-1 text-lg sm:text-xl [animation-delay:300ms]">
             <span aria-hidden="true">🎉</span>
@@ -443,36 +443,19 @@ function Index() {
 
           <Countdown />
 
-          <div className="animate-fade-up mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 [animation-delay:600ms]">
+          <div className="animate-fade-up mt-8 flex flex-row items-stretch justify-center gap-3 sm:gap-4 [animation-delay:600ms]">
             <Link
               to="/rsvp"
-              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full bg-purple-100 px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold text-purple-900 shadow-xl transition-all duration-300 hover:scale-105 hover:bg-purple-200 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-purple-200/50"
+              className="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 whitespace-nowrap rounded-full bg-purple-100 px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold text-purple-900 shadow-xl transition-all duration-300 hover:scale-105 hover:bg-purple-200 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-purple-200/50"
             >
-              RSVP Now
+              RSVP
             </Link>
             <button
-              onClick={async () => {
-                const url = window.location.href;
-                if (navigator.share) {
-                  try {
-                    await navigator.share({
-                      title: "You're Invited — Deborah Woolley's 70th Birthday",
-                      text: "Join us October 23–25, 2026 for three days of praise, celebration, and thanksgiving!",
-                      url,
-                    });
-                  } catch {
-                    // user cancelled or share failed
-                  }
-                } else {
-                  await navigator.clipboard.writeText(url);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
-                }
-              }}
-              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-sm px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/20 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-white/20"
+              onClick={() => setShowInvitation(true)}
+              className="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/30 bg-white/10 backdrop-blur-sm px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/20 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-white/20"
             >
               <Link2 className="w-5 h-5" />
-              {copied ? "Link Copied!" : "Share Invitation"}
+              Invitation
             </button>
           </div>
 
@@ -497,6 +480,31 @@ function Index() {
           </svg>
         </div>
       </section>
+
+      {showInvitation && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setShowInvitation(false)}
+        >
+          <div
+            className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowInvitation(false)}
+              className="absolute right-3 top-3 z-10 rounded-full bg-black/60 p-2 text-white transition hover:bg-black/80"
+              aria-label="Close invitation"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img
+              src={linkShare}
+              alt="70th Birthday Invitation"
+              className="h-auto w-full"
+            />
+          </div>
+        </div>
+      )}
 
       <section className="mx-auto w-full max-w-5xl px-4 py-16 sm:py-24">
         <div className="text-center mb-12">
