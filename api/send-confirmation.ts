@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { linkImageBase64 } from "./link-image";
 
 type SendBody = {
   to: string;
@@ -100,7 +101,17 @@ function buildEmailHtml(body: SendBody): string {
                 </td>
               </tr>
               <tr>
-                <td style="padding:32px 32px 8px 32px;font-family:Arial,Helvetica,sans-serif;color:#1f1b30;">
+                <td style="padding:20px 32px 0 32px;text-align:center;">
+                  <img
+                    src="cid:invitation"
+                    alt="70th Birthday Invitation"
+                    width="420"
+                    style="max-width:100%;width:420px;height:auto;border-radius:14px;border:1px solid #ece8f7;display:inline-block;"
+                  />
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:24px 32px 8px 32px;font-family:Arial,Helvetica,sans-serif;color:#1f1b30;">
                   <div style="font-size:12px;color:#7c3aed;font-weight:700;text-transform:uppercase;letter-spacing:0.15em;">${attending ? "RSVP Confirmed" : "Response Received"}</div>
                   ${bodyText}
                 </td>
@@ -202,6 +213,13 @@ export default async function handler(req: VercelReq, res: VercelRes) {
       to: body.to,
       subject: body.attending ? `RSVP Confirmed — ${TITLE} 🎉` : `${TITLE} — Response Received`,
       html: buildEmailHtml(body),
+      attachments: [
+        {
+          filename: "invitation.jpeg",
+          content: Buffer.from(linkImageBase64, "base64"),
+          cid: "invitation",
+        },
+      ],
     });
 
     res.status(200).json({ ok: true });

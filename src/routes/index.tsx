@@ -424,23 +424,18 @@ function Index() {
         <FloatingBalloons />
 
         <div className="relative z-30 flex flex-1 flex-col items-center justify-center px-4 pb-16 pt-20 text-center sm:pb-24 sm:pt-24">
-          <img
-            src={linkShare}
-            alt={`${party.celebrant}'s 70th birthday invitation`}
-            className="animate-fade-up w-[68%] max-w-[300px] rounded-2xl object-cover shadow-2xl ring-4 ring-white/25 [animation-delay:50ms]"
-          />
+          <h1 className="animate-fade-up mt-8 font-display text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold leading-[1.2] text-white drop-shadow-xl [animation-delay:150ms]">
+            You're Cordially Invited to Celebrate{" "}
+            <span className="whitespace-nowrap">{party.celebrant}'s</span>{" "}
+            <span className="shimmer-text relative inline-block">70th Birthday</span>
+          </h1>
 
-          <div className="animate-fade-up mt-8 inline-flex flex-wrap items-center justify-center gap-x-1 text-lg sm:text-xl [animation-delay:150ms]">
+          <div className="animate-fade-up mt-6 inline-flex flex-wrap items-center justify-center gap-x-1 text-lg sm:text-xl [animation-delay:300ms]">
             <span aria-hidden="true">🎉</span>
             <span className="text-white/95">October 23–25, 2026</span>
             <span aria-hidden="true">🎂</span>
             <span aria-hidden="true">🎊</span>
           </div>
-
-          <h1 className="animate-fade-up mt-6 font-display text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.15] text-white drop-shadow-xl [animation-delay:250ms]">
-            Celebrating <span className="shimmer-text relative inline-block">70 years</span> of{" "}
-            <span className="whitespace-nowrap">{party.celebrant}</span>
-          </h1>
 
           <Countdown />
 
