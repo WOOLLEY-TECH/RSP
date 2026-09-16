@@ -7,7 +7,7 @@ import mum3 from "@/assets/mum3.jpeg";
 import mum4 from "@/assets/mum4.jpeg";
 import mum5 from "@/assets/mum5.jpeg";
 import linkShare from "@/assets/link.jpeg";
-import { PartyPopper, Heart, Sparkles, Music, Crown, Cake, Calendar, Link2 } from "lucide-react";
+import { PartyPopper, Heart, Sparkles, Music, Crown, Cake, Link2 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -424,24 +424,23 @@ function Index() {
         <FloatingBalloons />
 
         <div className="relative z-30 flex flex-1 flex-col items-center justify-center px-4 pb-16 pt-20 text-center sm:pb-24 sm:pt-24">
-          <p className="animate-fade-up text-xs sm:text-sm uppercase tracking-[0.4em] text-white/90 mb-4 [animation-delay:100ms]">
-            You're cordially invited to celebrate
-          </p>
+          <img
+            src={linkShare}
+            alt={`${party.celebrant}'s 70th birthday invitation`}
+            className="animate-fade-up w-[68%] max-w-[300px] rounded-2xl object-cover shadow-2xl ring-4 ring-white/25 [animation-delay:50ms]"
+          />
 
-          <h1 className="animate-fade-up mt-2 font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] text-white drop-shadow-xl [animation-delay:200ms]">
-            THE <span className="shimmer-text relative inline-block">70th</span> BIRTHDAY
-          </h1>
-
-          <p className="animate-fade-up mt-4 font-display text-xl sm:text-2xl lg:text-3xl font-semibold text-white/95 [animation-delay:300ms]">
-            {party.celebrant}
-          </p>
-
-          <div className="animate-fade-up mt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-white/80 [animation-delay:400ms]">
-            <span className="flex items-center gap-1.5 text-sm sm:text-base">
-              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" />
-              October 23–25, 2026
-            </span>
+          <div className="animate-fade-up mt-8 inline-flex flex-wrap items-center justify-center gap-x-1 text-lg sm:text-xl [animation-delay:150ms]">
+            <span aria-hidden="true">🎉</span>
+            <span className="text-white/95">October 23–25, 2026</span>
+            <span aria-hidden="true">🎂</span>
+            <span aria-hidden="true">🎊</span>
           </div>
+
+          <h1 className="animate-fade-up mt-6 font-display text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.15] text-white drop-shadow-xl [animation-delay:250ms]">
+            Celebrating <span className="shimmer-text relative inline-block">70 years</span> of{" "}
+            <span className="whitespace-nowrap">{party.celebrant}</span>
+          </h1>
 
           <Countdown />
 
