@@ -93,10 +93,10 @@ function buildEmailHtml(body: SendBody): string {
           <td align="center">
             <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #ece8f7;">
               <tr>
-                <td style="background:linear-gradient(135deg,#7c3aed,#9333ea);padding:28px 32px;text-align:center;">
-                  <div style="font-size:12px;color:#f3e8ff;letter-spacing:0.25em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">Celebrating 70 years</div>
-                  <div style="font-size:26px;font-weight:800;color:#ffffff;margin-top:6px;font-family:Arial,Helvetica,sans-serif;">${TITLE}</div>
-                  <div style="font-size:13px;color:#f3e8ff;margin-top:4px;font-family:Arial,Helvetica,sans-serif;">${DATES} · ${CELEBRANT}</div>
+                <td style="background:#ffffff;padding:28px 32px;text-align:center;border-bottom:1px solid #ece8f7;">
+                  <div style="font-size:12px;color:#7c3aed;letter-spacing:0.25em;text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;">Celebrating 70 years</div>
+                  <div style="font-size:26px;font-weight:800;color:#1f1b30;margin-top:6px;font-family:Arial,Helvetica,sans-serif;">${TITLE}</div>
+                  <div style="font-size:13px;color:#5b566b;margin-top:4px;font-family:Arial,Helvetica,sans-serif;">${DATES} · ${CELEBRANT}</div>
                 </td>
               </tr>
               <tr>

@@ -18,6 +18,7 @@ import { sql } from "@/lib/neon";
 import { party, mapEmbedUrl } from "@/lib/party";
 import { logActivity } from "@/lib/activity";
 import mum5 from "@/assets/mum5.jpeg";
+import linkShare from "@/assets/link share.jpeg";
 
 export const Route = createFileRoute("/rsvp")({
   head: () => ({
@@ -29,14 +30,14 @@ export const Route = createFileRoute("/rsvp")({
       },
       { property: "og:title", content: `RSVP — ${party.title}` },
       { property: "og:description", content: "Confirm your attendance in under a minute." },
-      { property: "og:image", content: mum5 },
+      { property: "og:image", content: linkShare },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: `RSVP — ${party.title}` },
       { name: "twitter:description", content: "Confirm your attendance in under a minute." },
-      { name: "twitter:image", content: mum5 },
+      { name: "twitter:image", content: linkShare },
     ],
   }),
   component: RsvpPage,

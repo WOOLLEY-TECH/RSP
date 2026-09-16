@@ -6,7 +6,8 @@ import mum2 from "@/assets/mum2.jpeg";
 import mum3 from "@/assets/mum3.jpeg";
 import mum4 from "@/assets/mum4.jpeg";
 import mum5 from "@/assets/mum5.jpeg";
-import { PartyPopper, Heart, Sparkles, Music, Crown, Cake, Calendar } from "lucide-react";
+import linkShare from "@/assets/link share.jpeg";
+import { PartyPopper, Heart, Sparkles, Music, Crown, Cake, Calendar, Link2 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/")({
         property: "og:description",
         content: `Celebrating 70 years of faith, grace, and love. Join us October 23–25, 2026 for Praise Night, 70th Birthday Celebration, and Thanksgiving Service.`,
       },
-      { property: "og:image", content: mum5 },
+      { property: "og:image", content: linkShare },
       { property: "og:image:width", content: "1200" },
       { property: "og:image:height", content: "630" },
       { property: "og:type", content: "website" },
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/")({
         name: "twitter:description",
         content: `Celebrating 70 years of faith, grace, and love. Join us October 23–25, 2026.`,
       },
-      { name: "twitter:image", content: mum5 },
+      { name: "twitter:image", content: linkShare },
     ],
   }),
   component: Index,
@@ -414,6 +415,7 @@ function EventCard({ event }: { event: (typeof party.events)[0] & { featured?: b
 }
 
 function Index() {
+  const [copied, setCopied] = useState(false);
   return (
     <main className="min-h-screen w-full bg-background">
       <section className="relative flex min-h-[100svh] w-full flex-col overflow-hidden bg-ink">
@@ -427,7 +429,7 @@ function Index() {
           </p>
 
           <h1 className="animate-fade-up mt-2 font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] text-white drop-shadow-xl [animation-delay:200ms]">
-            <span className="shimmer-text relative inline-block">70th</span> Birthday
+            THE <span className="shimmer-text relative inline-block">70th</span> BIRTHDAY
           </h1>
 
           <p className="animate-fade-up mt-4 font-display text-xl sm:text-2xl lg:text-3xl font-semibold text-white/95 [animation-delay:300ms]">
@@ -450,6 +452,30 @@ function Index() {
             >
               RSVP Now
             </Link>
+            <button
+              onClick={async () => {
+                const url = window.location.href;
+                if (navigator.share) {
+                  try {
+                    await navigator.share({
+                      title: "You're Invited — Deborah Woolley's 70th Birthday",
+                      text: "Join us October 23–25, 2026 for three days of praise, celebration, and thanksgiving!",
+                      url,
+                    });
+                  } catch {
+                    // user cancelled or share failed
+                  }
+                } else {
+                  await navigator.clipboard.writeText(url);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                }
+              }}
+              className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-full border border-white/30 bg-white/10 backdrop-blur-sm px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/20 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-white/20"
+            >
+              <Link2 className="w-5 h-5" />
+              {copied ? "Link Copied!" : "Share Invitation"}
+            </button>
           </div>
 
           <p className="animate-fade-up mt-4 max-w-md text-sm sm:text-base leading-relaxed text-white/70 [animation-delay:700ms]">
