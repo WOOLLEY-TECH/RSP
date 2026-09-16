@@ -465,14 +465,14 @@ function Index() {
           <p className="animate-fade-up text-sm sm:text-base lg:text-lg font-semibold tracking-[0.2em] uppercase text-white/80 [animation-delay:150ms]">
             You Are Cordially Invited to Celebrate
           </p>
-          <h2 className="animate-fade-up mt-2 sm:mt-3 font-display text-lg sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-xl [animation-delay:250ms]">
+          <h2 className="animate-fade-up mt-3 sm:mt-4 font-display text-lg sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-xl [animation-delay:250ms]">
             The 70th Birthday of
           </h2>
-          <h1 className="animate-fade-up mt-1.5 sm:mt-2 font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight text-white drop-shadow-xl [animation-delay:350ms]">
+          <h1 className="animate-fade-up mt-2 sm:mt-3 font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight text-white drop-shadow-xl [animation-delay:350ms]">
             <span className="shimmer-text relative inline-block">{party.celebrant}</span>
           </h1>
 
-          <div className="animate-fade-up mt-3 inline-flex flex-wrap items-center justify-center gap-x-1.5 text-base sm:text-xl [animation-delay:300ms]">
+          <div className="animate-fade-up mt-4 sm:mt-5 inline-flex flex-wrap items-center justify-center gap-x-1.5 text-base sm:text-xl [animation-delay:300ms]">
             <span aria-hidden="true">🎉</span>
             <span className="text-white/95">October 23–25, 2026</span>
             <span aria-hidden="true">🎂</span>
@@ -481,27 +481,29 @@ function Index() {
 
           <Countdown />
 
-          <div className="animate-fade-up mt-6 flex flex-row items-stretch justify-center gap-3 sm:mt-8 sm:gap-4 [animation-delay:600ms]">
+          <div className="animate-fade-up mt-8 sm:mt-10 flex justify-center [animation-delay:600ms]">
             <Link
               to="/rsvp"
-              className="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 whitespace-nowrap rounded-full bg-purple-100 px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold text-purple-900 shadow-xl transition-all duration-300 hover:scale-105 hover:bg-purple-200 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-purple-200/50"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-purple-100 px-10 sm:px-14 py-4 sm:py-5 text-base sm:text-lg font-semibold text-purple-900 shadow-xl transition-all duration-300 hover:scale-105 hover:bg-purple-200 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-purple-200/50"
             >
               RSVP
             </Link>
-            <button
-              onClick={copyInvitationLink}
-              className="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/30 bg-white/10 backdrop-blur-sm px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/20 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-white/20"
-            >
-              {copied ? <Check className="w-5 h-5" /> : <Link2 className="w-5 h-5" />}
-              {copied ? "Link Copied" : "Invitation"}
-            </button>
           </div>
 
-          <p className="animate-fade-up mt-4 max-w-md text-sm sm:text-base leading-relaxed text-white/70 [animation-delay:700ms]">
+          <p className="animate-fade-up mt-6 sm:mt-8 max-w-md text-sm sm:text-base leading-relaxed text-white/70 [animation-delay:700ms]">
             Join us for three unforgettable days of praise, celebration, and thanksgiving as we
             honor 70 years of faith, grace, and love.
           </p>
         </div>
+
+        <button
+          onClick={copyInvitationLink}
+          className="fixed bottom-5 right-5 z-50 inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-white/25 bg-white/10 backdrop-blur-md px-5 py-3 text-sm font-semibold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/20 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-white/20 sm:bottom-8 sm:right-8"
+          aria-label={copied ? "Invitation link copied" : "Copy invitation link"}
+        >
+          {copied ? <Check className="w-5 h-5" /> : <Link2 className="w-5 h-5" />}
+          {copied ? "Link Copied" : "Invitation"}
+        </button>
 
         <div
           className="absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 animate-bounce z-30"
@@ -519,9 +521,9 @@ function Index() {
         </div>
       </section>
 
-      <section className="mx-auto w-full max-w-5xl px-4 py-16 sm:py-24">
-        <div className="text-center mb-12">
-          <p className="text-xs uppercase tracking-[0.3em] text-primary font-medium mb-2">
+      <section className="mx-auto w-full max-w-5xl px-4 py-20 sm:py-28">
+        <div className="text-center mb-14">
+          <p className="text-xs uppercase tracking-[0.3em] text-primary font-medium mb-3">
             Event Schedule
           </p>
           <h2 className="font-display text-4xl sm:text-5xl font-bold text-foreground">
@@ -529,7 +531,7 @@ function Index() {
           </h2>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-3">
+        <div className="grid gap-8 sm:grid-cols-3">
           {party.events.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}
