@@ -136,16 +136,49 @@ function buildEmailHtml(body: SendBody): string {
   `;
 }
 
+function buildTransporter() {
+  const user = process.env.GMAIL_USER;
+  const appPassword = process.env.GMAIL_APP_PASSWORD;
+  const clientId = process.env.GMAIL_CLIENT_ID;
+  const clientSecret = process.env.GMAIL_CLIENT_SECRET;
+  const refreshToken = process.env.GMAIL_REFRESH_TOKEN;
+
+  if (user && clientId && clientSecret && refreshToken) {
+    return nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: {
+        type: "OAuth2",
+        user,
+        clientId,
+        clientSecret,
+        refreshToken,
+      },
+    });
+  }
+
+  if (user && appPassword) {
+    return nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
+      auth: { user, pass: appPassword },
+    });
+  }
+
+  return null;
+}
+
 export default async function handler(req: VercelReq, res: VercelRes) {
   if (req.method !== "POST") {
     res.status(405).json({ ok: false, error: "Method not allowed" });
     return;
   }
 
-  const user = process.env.GMAIL_USER;
-  const pass = process.env.GMAIL_APP_PASSWORD;
+  const transporter = buildTransporter();
 
-  if (!user || !pass) {
+  if (!transporter) {
     res.status(500).json({ ok: false, error: "Email sending is not configured" });
     return;
   }
@@ -164,15 +197,8 @@ export default async function handler(req: VercelReq, res: VercelRes) {
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
-      auth: { user, pass },
-    });
-
     await transporter.sendMail({
-      from: `"${TITLE}" <${user}>`,
+      from: `"${TITLE}" <${process.env.GMAIL_USER}>`,
       to: body.to,
       subject: body.attending ? `RSVP Confirmed — ${TITLE} 🎉` : `${TITLE} — Response Received`,
       html: buildEmailHtml(body),
