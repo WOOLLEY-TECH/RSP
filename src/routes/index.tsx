@@ -7,7 +7,8 @@ import mum3 from "@/assets/mum3.jpeg";
 import mum4 from "@/assets/mum4.jpeg";
 import mum5 from "@/assets/mum5.jpeg";
 import linkShare from "@/assets/link.jpeg";
-import { PartyPopper, Heart, Sparkles, Music, Crown, Cake, Link2, X } from "lucide-react";
+import { PartyPopper, Heart, Sparkles, Music, Crown, Cake, Link2, Check } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -83,7 +84,7 @@ function Countdown() {
   }, []);
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-6 lg:gap-4">
+    <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-4 lg:gap-4 sm:mt-6">
       {[
         { label: "Days", value: timeLeft.days.toString().padStart(2, "0") },
         { label: "Hours", value: timeLeft.hours.toString().padStart(2, "0") },
@@ -92,9 +93,9 @@ function Countdown() {
       ].map((item) => (
         <div
           key={item.label}
-          className="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-xl px-3 sm:px-5 lg:px-6 py-2 sm:py-3 lg:py-4 border border-white/20 min-w-[60px] sm:min-w-[70px] lg:min-w-[80px]"
+          className="flex flex-col items-center bg-white/10 backdrop-blur-sm rounded-xl px-2.5 sm:px-5 lg:px-6 py-1.5 sm:py-3 lg:py-4 border border-white/20 min-w-[52px] sm:min-w-[70px] lg:min-w-[80px]"
         >
-          <span className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-white tabular-nums leading-tight">
+          <span className="font-display text-xl sm:text-3xl lg:text-4xl font-bold text-white tabular-nums leading-tight">
             {item.value}
           </span>
           <span className="text-[10px] sm:text-xs uppercase tracking-wider text-white/70 mt-0.5">
@@ -415,7 +416,44 @@ function EventCard({ event }: { event: (typeof party.events)[0] & { featured?: b
 }
 
 function Index() {
-  const [showInvitation, setShowInvitation] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const copyInvitationLink = useCallback(async () => {
+    const url = window.location.href;
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(url);
+      ok = true;
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = url;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand("copy");
+        ok = true;
+      } catch {
+        ok = false;
+      }
+      document.body.removeChild(textarea);
+    }
+
+    if (!ok) {
+      toast.error("Couldn't copy the link", {
+        description: "Please copy the URL from your address bar.",
+      });
+      return;
+    }
+
+    setCopied(true);
+    toast.success("Invitation link copied!", {
+      description: "Share it with your family and friends.",
+    });
+    window.setTimeout(() => setCopied(false), 2500);
+  }, []);
+
   return (
     <main className="min-h-screen w-full bg-background">
       <section className="relative flex min-h-[100svh] w-full flex-col overflow-hidden bg-ink">
@@ -423,18 +461,18 @@ function Index() {
         <Confetti />
         <FloatingBalloons />
 
-        <div className="relative z-30 flex flex-1 flex-col items-center justify-start px-4 pb-20 pt-12 text-center sm:pb-24 sm:pt-16">
+        <div className="relative z-30 flex flex-1 flex-col items-center justify-center px-4 py-12 text-center sm:py-16">
           <p className="animate-fade-up text-sm sm:text-base lg:text-lg font-semibold tracking-[0.2em] uppercase text-white/80 [animation-delay:150ms]">
             You Are Cordially Invited to Celebrate
           </p>
-          <h2 className="animate-fade-up mt-3 font-display text-xl sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-xl [animation-delay:250ms]">
+          <h2 className="animate-fade-up mt-2 sm:mt-3 font-display text-lg sm:text-2xl lg:text-3xl font-bold text-white drop-shadow-xl [animation-delay:250ms]">
             The 70th Birthday of
           </h2>
-          <h1 className="animate-fade-up mt-2 font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] text-white drop-shadow-xl [animation-delay:350ms]">
+          <h1 className="animate-fade-up mt-1.5 sm:mt-2 font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight text-white drop-shadow-xl [animation-delay:350ms]">
             <span className="shimmer-text relative inline-block">{party.celebrant}</span>
           </h1>
 
-          <div className="animate-fade-up mt-6 inline-flex flex-wrap items-center justify-center gap-x-1 text-lg sm:text-xl [animation-delay:300ms]">
+          <div className="animate-fade-up mt-3 inline-flex flex-wrap items-center justify-center gap-x-1.5 text-base sm:text-xl [animation-delay:300ms]">
             <span aria-hidden="true">🎉</span>
             <span className="text-white/95">October 23–25, 2026</span>
             <span aria-hidden="true">🎂</span>
@@ -443,7 +481,7 @@ function Index() {
 
           <Countdown />
 
-          <div className="animate-fade-up mt-8 flex flex-row items-stretch justify-center gap-3 sm:gap-4 [animation-delay:600ms]">
+          <div className="animate-fade-up mt-6 flex flex-row items-stretch justify-center gap-3 sm:mt-8 sm:gap-4 [animation-delay:600ms]">
             <Link
               to="/rsvp"
               className="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 whitespace-nowrap rounded-full bg-purple-100 px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold text-purple-900 shadow-xl transition-all duration-300 hover:scale-105 hover:bg-purple-200 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-purple-200/50"
@@ -451,11 +489,11 @@ function Index() {
               RSVP
             </Link>
             <button
-              onClick={() => setShowInvitation(true)}
+              onClick={copyInvitationLink}
               className="inline-flex flex-1 sm:flex-none items-center justify-center gap-2 whitespace-nowrap rounded-full border border-white/30 bg-white/10 backdrop-blur-sm px-8 sm:px-12 py-4 text-base sm:text-lg font-semibold text-white shadow-xl transition-all duration-300 hover:scale-105 hover:bg-white/20 hover:shadow-2xl focus:outline-none focus:ring-4 focus:ring-white/20"
             >
-              <Link2 className="w-5 h-5" />
-              Invitation
+              {copied ? <Check className="w-5 h-5" /> : <Link2 className="w-5 h-5" />}
+              {copied ? "Link Copied" : "Invitation"}
             </button>
           </div>
 
@@ -480,31 +518,6 @@ function Index() {
           </svg>
         </div>
       </section>
-
-      {showInvitation && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-          onClick={() => setShowInvitation(false)}
-        >
-          <div
-            className="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setShowInvitation(false)}
-              className="absolute right-3 top-3 z-10 rounded-full bg-black/60 p-2 text-white transition hover:bg-black/80"
-              aria-label="Close invitation"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <img
-              src={linkShare}
-              alt="70th Birthday Invitation"
-              className="h-auto w-full"
-            />
-          </div>
-        </div>
-      )}
 
       <section className="mx-auto w-full max-w-5xl px-4 py-16 sm:py-24">
         <div className="text-center mb-12">
