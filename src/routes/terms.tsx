@@ -55,7 +55,7 @@ function TermsOfService() {
             </p>
             <ul className="list-disc pl-6 space-y-2 text-muted-foreground">
               <li>
-                <strong className="text-foreground">Praise Night</strong> — Friday, October 23,
+                <strong className="text-foreground">PRAISE NIGHT</strong> — Friday, October 23,
                 2026, at International Charismatic Church (ICC), Grand Prairie, TX.
               </li>
               <li>

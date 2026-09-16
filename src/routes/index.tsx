@@ -20,7 +20,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: `Happy 70th Birthday — Deborah Woolley` },
       {
         property: "og:description",
-        content: `Celebrating 70 years of faith, grace, and love. Join us October 23–25, 2026 for Praise Night, 70th Birthday Celebration, and Thanksgiving Service.`,
+        content: `Celebrating 70 years of faith, grace, and love. Join us October 23–25, 2026 for PRAISE NIGHT, 70th Birthday Celebration, and Thanksgiving Service.`,
       },
       { property: "og:image", content: linkShare },
       { property: "og:image:width", content: "1200" },
@@ -424,11 +424,15 @@ function Index() {
         <FloatingBalloons />
 
         <div className="relative z-30 flex flex-1 flex-col items-center justify-center px-4 pb-16 pt-20 text-center sm:pb-24 sm:pt-24">
-          <h1 className="animate-fade-up mt-8 font-display text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold leading-[1.2] text-white drop-shadow-xl [animation-delay:150ms]">
-            You're Cordially Invited to Celebrate{" "}
-            <span className="whitespace-nowrap">{party.celebrant}'s</span>{" "}
-            <span className="shimmer-text relative inline-block">70th Birthday</span>
+          <p className="animate-fade-up mt-8 text-sm sm:text-base lg:text-lg font-medium tracking-wider uppercase text-white/70 [animation-delay:150ms]">
+            You're Cordially Invited to Celebrate
+          </p>
+          <h1 className="animate-fade-up mt-3 font-display text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold leading-[1.15] text-white drop-shadow-xl [animation-delay:250ms]">
+            {party.celebrant}
           </h1>
+          <h2 className="animate-fade-up mt-2 font-display text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold leading-[1.2] text-white drop-shadow-xl [animation-delay:350ms]">
+            <span className="shimmer-text relative inline-block">70th Birthday</span>
+          </h2>
 
           <div className="animate-fade-up mt-6 inline-flex flex-wrap items-center justify-center gap-x-1 text-lg sm:text-xl [animation-delay:300ms]">
             <span aria-hidden="true">🎉</span>

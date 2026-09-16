@@ -23,7 +23,7 @@ const EVENTS = [
   {
     day: "Friday",
     date: "October 23, 2026",
-    title: "Praise Night",
+    title: "PRAISE NIGHT",
     venue: "International Charismatic Church (ICC)",
     address: "1737 SW 3rd St, Grand Prairie, TX 75051",
   },

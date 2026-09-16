@@ -81,7 +81,7 @@ const events = [
   {
     day: "Friday",
     date: "October 23, 2026",
-    title: "Praise Night",
+    title: "PRAISE NIGHT",
     time: "6:30pm - 8:30 pm",
     venue: "INTERNATIONAL CHARISMATIC CHURCH (ICC)",
     address: "1737 SW 3rd St, Grand Prairie, TX 75051",
