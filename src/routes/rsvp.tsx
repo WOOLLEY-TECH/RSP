@@ -109,11 +109,11 @@ const events = [
     title: "THANKSGIVING SERVICE",
     time: "9:00 AM - 12:30 PM",
     venue: "INTERNATIONAL CHARISMATIC CHURCH (ICC)",
-    address: "1717 SW 3rd St, Grand Prairie, TX 75051",
+    address: "1737 SW 3rd St, Grand Prairie, TX 75051",
     dress: "Fascinator and Hats",
     note: "Fascinator and Hats",
     icon: "🕊️",
-    mapQuery: "1717 SW 3rd St, Grand Prairie, TX 75051",
+    mapQuery: "1737 SW 3rd St, Grand Prairie, TX 75051",
   },
 ] as const;
 
